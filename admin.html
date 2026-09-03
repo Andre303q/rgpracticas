@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Administrador - RGPracticas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #090d16;
+            --accent: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.4);
+            --card-bg: rgba(17, 24, 39, 0.75);
+            --border: rgba(255, 255, 255, 0.08);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text-main);
+            min-height: 100vh;
+            box-sizing: border-box;
+            background-image: 
+                radial-gradient(circle at 10% 10%, rgba(59, 130, 246, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 90% 90%, rgba(139, 92, 246, 0.12) 0%, transparent 40%);
+        }
+
+        .header {
+            max-width: 1200px;
+            margin: 0 auto 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            padding: 16px 24px;
+            border-radius: 18px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-box {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            box-shadow: 0 4px 12px var(--accent-glow);
+        }
+
+        h1 { margin: 0; font-size: 1.3rem; font-weight: 700; }
+        p.sub { margin: 0; font-size: 0.8rem; color: var(--text-muted); }
+
+        .btn-logout {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #f87171;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-logout:hover { background: rgba(239, 68, 68, 0.3); }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        .filters {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filters label { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); }
+
+        .filters input[type="date"] {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 8px;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .btn-filter {
+            background: var(--accent);
+            border: none;
+            color: #fff;
+            padding: 9px 18px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            box-shadow: 0 4px 12px var(--accent-glow);
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.875rem;
+        }
+
+        th {
+            background: rgba(0, 0, 0, 0.25);
+            color: var(--text-muted);
+            padding: 12px 16px;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-main);
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* Badges de Estado */
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-puntual { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .badge-temprano { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .badge-impuntual { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .badge-descuidado { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+
+        .btn-action {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            color: #fff;
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: all 0.2s;
+        }
+        .btn-action:hover { background: rgba(255, 255, 255, 0.15); }
+
+        .btn-approve {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            color: #34d399;
+            margin-right: 4px;
+        }
+
+        .btn-reject {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #f87171;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: #111827;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .modal-title { font-weight: 700; font-size: 1.1rem; }
+        .close-modal { cursor: pointer; font-size: 1.2rem; color: var(--text-muted); }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="brand">
+            <div class="logo-box">RG</div>
+            <div>
+                <h1>Panel Administrativo</h1>
+                <p class="sub">Gestión e Inspección de Asistencias</p>
+            </div>
+        </div>
+        <button class="btn-logout" id="btnLogout">Cerrar Sesión</button>
+    </div>
+
+    <div class="container">
+        <div class="filters">
+            <label for="fechaFiltro">Filtrar Fecha:</label>
+            <input type="date" id="fechaFiltro">
+            <button class="btn-filter" id="btnFiltrar">Buscar</button>
+            <button class="btn-filter" id="btnLimpiar" style="background: rgba(255,255,255,0.08); box-shadow: none;">Mostrar Todos</button>
+        </div>
+
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Practicante</th>
+                        <th>Registro</th>
+                        <th>Fecha y Hora</th>
+                        <th>Distancia</th>
+                        <th>Puntualidad</th>
+                        <th>Justificación</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaRegistros">
+                    <tr>
+                        <td colspan="7" style="text-align:center; color: var(--text-muted); padding:20px;">
+                            Cargando registros...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- MODAL DETALLES -->
+    <div id="modalDetalle" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Detalles de Marcación</div>
+                <span class="close-modal" id="btnCerrarModal">&times;</span>
+            </div>
+            <div id="modalBody" style="font-size:0.875rem; line-height:1.6; color: var(--text-muted);">
+            </div>
+        </div>
+    </div>
+
+<script type="module">
+    import { env } from './config.js'; // Importas la configuración
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, updateDoc, doc, query, orderBy } 
+        from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: env.FIREBASE_API_KEY,
+        authDomain: env.FIREBASE_AUTH_DOMAIN,
+        projectId: env.FIREBASE_PROJECT_ID,
+        storageBucket: env.FIREBASE_STORAGE_BUCKET,
+        messagingSenderId: env.FIREBASE_MESSAGING_SENDER_ID,
+        appId: env.FIREBASE_APP_ID
+    };
+
+    const db = getFirestore(initializeApp(firebaseConfig));
+    let todosLosRegistros = [];
+
+    document.getElementById("btnLogout").addEventListener("click", () => {
+        window.location.href = "index.html";
+    });
+
+    async function cargarRegistros() {
+        const tbody = document.getElementById("tablaRegistros");
+        try {
+            const q = query(collection(db, "registros"), orderBy("creado", "desc"));
+            const querySnapshot = await getDocs(q);
+            
+            todosLosRegistros = [];
+            querySnapshot.forEach((docSnap) => {
+                todosLosRegistros.push({ id: docSnap.id, ...docSnap.data() });
+            });
+
+            renderizarTabla(todosLosRegistros);
+        } catch (e) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#f87171;">Error al cargar registros: ${e.message}</td></tr>`;
+        }
+    }
+
+    function renderizarTabla(lista) {
+        const tbody = document.getElementById("tablaRegistros");
+        if (lista.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color: var(--text-muted); padding:20px;">No hay registros encontrados.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = "";
+        lista.forEach((reg) => {
+            const tr = document.createElement("tr");
+
+            let badgeClass = "badge-puntual";
+            if (reg.estadoPuntualidad === "Impuntual") badgeClass = "badge-impuntual";
+            if (reg.estadoPuntualidad === "Temprano") badgeClass = "badge-temprano";
+            if (reg.estadoPuntualidad === "Descuidado") badgeClass = "badge-descuidado";
+
+            let justHtml = "-";
+            if (reg.justificacion) {
+                const est = reg.estadoJustificacion || "Pendiente";
+                let colorEst = "#f59e0b";
+                if (est === "Aprobada") colorEst = "#34d399";
+                if (est === "Rechazada") colorEst = "#f87171";
+
+                justHtml = `
+                    <div style="font-size:0.8rem; max-width: 200px;">
+                        <i>"${reg.justificacion}"</i><br>
+                        <b style="color:${colorEst}; font-size:0.75rem;">Status: ${est}</b>
+                    </div>
+                `;
+            }
+
+            let accionesHtml = `<button class="btn-action btn-ver" data-id="${reg.id}">Ver Mapa/Info</button>`;
+
+            if (reg.justificacion && reg.estadoJustificacion === "Pendiente") {
+                accionesHtml += `
+                    <div style="margin-top:4px;">
+                        <button class="btn-action btn-approve" data-id="${reg.id}">Aprobar</button>
+                        <button class="btn-action btn-reject" data-id="${reg.id}">Rechazar</button>
+                    </div>
+                `;
+            }
+
+            tr.innerHTML = `
+                <td><b>${reg.nombre || reg.usuario}</b></td>
+                <td>${reg.tipo}</td>
+                <td>${reg.fechaHora}</td>
+                <td>${reg.distanciaMetros} metros</td>
+                <td><span class="badge ${badgeClass}">${reg.estadoPuntualidad || 'N/A'}</span></td>
+                <td>${justHtml}</td>
+                <td>${accionesHtml}</td>
+            `;
+
+            tbody.appendChild(tr);
+        });
+
+        asignarEventosBotones();
+    }
+
+    function asignarEventosBotones() {
+        document.querySelectorAll(".btn-ver").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                const id = e.target.getAttribute("data-id");
+                const item = todosLosRegistros.find(r => r.id === id);
+                if (item) abrirModalDetalle(item);
+            });
+        });
+
+        document.querySelectorAll(".btn-approve").forEach(btn => {
+            btn.addEventListener("click", async (e) => {
+                const id = e.target.getAttribute("data-id");
+                await actualizarEstadoJustificacion(id, "Aprobada");
+            });
+        });
+
+        document.querySelectorAll(".btn-reject").forEach(btn => {
+            btn.addEventListener("click", async (e) => {
+                const id = e.target.getAttribute("data-id");
+                await actualizarEstadoJustificacion(id, "Rechazada");
+            });
+        });
+    }
+
+    async function actualizarEstadoJustificacion(id, nuevoEstado) {
+        try {
+            const regRef = doc(db, "registros", id);
+            await updateDoc(regRef, { estadoJustificacion: nuevoEstado });
+            await cargarRegistros();
+        } catch (e) {
+            alert("Error al actualizar: " + e.message);
+        }
+    }
+
+    function abrirModalDetalle(item) {
+        const body = document.getElementById("modalBody");
+        const mapsUrl = `https://www.google.com/maps?q=${item.latitud},${item.longitud}`;
+
+        body.innerHTML = `
+            <p><b style="color:#fff;">Usuario:</b> ${item.nombre} (${item.usuario})</p>
+            <p><b style="color:#fff;">Fecha/Hora:</b> ${item.fechaHora}</p>
+            <p><b style="color:#fff;">Distancia al Punto:</b> ${item.distanciaMetros} metros</p>
+            <p><b style="color:#fff;">Observaciones:</b> ${item.observaciones || 'Ninguna'}</p>
+            <p><b style="color:#fff;">Coordenadas:</b> ${item.latitud}, ${item.longitud}</p>
+            <a href="${mapsUrl}" target="_blank" style="display:inline-block; margin-top:10px; color:#60a5fa; text-decoration:none; font-weight:bold;">📍 Ver Ubicación en Google Maps &rarr;</a>
+        `;
+
+        document.getElementById("modalDetalle").classList.remove("hidden");
+    }
+
+    document.getElementById("btnCerrarModal").addEventListener("click", () => {
+        document.getElementById("modalDetalle").classList.add("hidden");
+    });
+
+    document.getElementById("btnFiltrar").addEventListener("click", () => {
+        const fecha = document.getElementById("fechaFiltro").value;
+        if (!fecha) return;
+
+        const [y, m, d] = fecha.split("-");
+        const fechaBusqueda = `${parseInt(d)}/${parseInt(m)}/${y}`;
+
+        const filtrados = todosLosRegistros.filter(r => r.fechaHora && r.fechaHora.includes(fechaBusqueda));
+        renderizarTabla(filtrados);
+    });
+
+    document.getElementById("btnLimpiar").addEventListener("click", () => {
+        document.getElementById("fechaFiltro").value = "";
+        renderizarTabla(todosLosRegistros);
+    });
+
+    cargarRegistros();
+</script>
+</body>
+</html>

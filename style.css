@@ -1,0 +1,318 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: radial-gradient(circle at 50% 20%, #1a3a68 0%, #080d19 100%);
+    color: #ffffff;
+    padding: 20px;
+    overflow-x: hidden;
+}
+
+/* EFECTO DE LUZ NEÓN DE FONDO */
+body::before {
+    content: '';
+    position: absolute;
+    width: 350px;
+    height: 350px;
+    background: #0088ff;
+    filter: blur(160px);
+    opacity: 0.22;
+    z-index: 0;
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.main-container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 420px;
+}
+
+.main-container.admin-wide {
+    max-width: 950px;
+}
+
+/* TARJETA CON ESTILO CRISTAL TRANSLÚCIDO */
+.card {
+    background: rgba(13, 22, 38, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(0, 162, 255, 0.25);
+    border-radius: 28px;
+    padding: 35px 28px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5),
+                inset 0 0 15px rgba(0, 162, 255, 0.1);
+    text-align: center;
+}
+
+/* LOGO BADGE */
+.logo-badge {
+    width: 70px;
+    height: 70px;
+    margin: 0 auto 15px auto;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0d2847 0%, #0052a3 100%);
+    border: 2px solid #00a2ff;
+    box-shadow: 0 0 20px rgba(0, 162, 255, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #ffffff;
+}
+
+h1 {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+    background: linear-gradient(180deg, #ffffff 0%, #b0c2de 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.subtitle {
+    font-size: 14px;
+    color: #8da4c4;
+    margin-bottom: 25px;
+}
+
+/* PESTAÑAS (TABS) */
+.tabs {
+    display: flex;
+    background: rgba(5, 12, 24, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 4px;
+    border-radius: 14px;
+    margin-bottom: 25px;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    background: transparent;
+    color: #7b93b2;
+    font-weight: 600;
+    font-size: 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.tab-btn.active {
+    background: #0077ff;
+    color: #ffffff;
+    box-shadow: 0 0 15px rgba(0, 119, 255, 0.5);
+}
+
+/* FORMULARIOS E INPUTS */
+.form-group {
+    margin-bottom: 18px;
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #8da4c4;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.form-group input, .form-group select {
+    width: 100%;
+    padding: 14px 18px;
+    background: rgba(8, 18, 33, 0.8);
+    border: 1px solid rgba(0, 162, 255, 0.3);
+    border-radius: 14px;
+    color: #ffffff;
+    font-size: 15px;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.form-group input:focus, .form-group select:focus {
+    border-color: #00a2ff;
+    box-shadow: 0 0 15px rgba(0, 162, 255, 0.4);
+    background: rgba(12, 26, 48, 0.9);
+}
+
+.form-group select {
+    cursor: pointer;
+    color: #ffffff;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300a2ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    background-size: 16px;
+}
+
+.form-group select option {
+    background-color: #0b1526;
+    color: #ffffff;
+}
+
+.form-group select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* BOTONES */
+.btn-submit {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #0077ff 0%, #0052a3 100%);
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(0, 119, 255, 0.4);
+    transition: all 0.3s ease;
+    margin-top: 10px;
+}
+
+.btn-submit:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(0, 119, 255, 0.6);
+}
+
+.btn-submit:disabled {
+    background: rgba(255, 255, 255, 0.1);
+    color: #556b8a;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+.btn-logout {
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 14px;
+    color: #8da4c4;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 12px;
+}
+
+.btn-logout:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+}
+
+/* ESTADOS DE UBICACIÓN Y ALERTAS */
+.geo-status {
+    padding: 14px 16px;
+    border-radius: 14px;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.4;
+    margin-bottom: 20px;
+    text-align: left;
+    backdrop-filter: blur(5px);
+}
+
+.geo-status.info {
+    background: rgba(0, 119, 255, 0.12);
+    border: 1px solid rgba(0, 119, 255, 0.3);
+    color: #60a5fa;
+}
+
+.geo-status.success {
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #34d399;
+}
+
+.geo-status.error {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #f87171;
+}
+
+.alert-msg {
+    margin-top: 15px;
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.alert-error {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.alert-success {
+    background: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+/* TABLAS PANEL ADMIN */
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+    margin-top: 20px;
+    border-radius: 16px;
+    border: 1px solid rgba(0, 162, 255, 0.2);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 14px;
+}
+
+th, td {
+    padding: 14px 18px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+th {
+    background: rgba(8, 18, 33, 0.9);
+    color: #8da4c4;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+}
+
+tr:hover {
+    background: rgba(0, 162, 255, 0.05);
+}
+
+.badge-tipo {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    background: rgba(0, 162, 255, 0.15);
+    color: #60a5fa;
+    border: 1px solid rgba(0, 162, 255, 0.3);
+}
+
+.hidden {
+    display: none !important;
+}
