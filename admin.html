@@ -272,13 +272,20 @@
 
     </div>
 
-    <!-- MODAL DE DETALLE -->
+    <!-- MODAL DE DETALLE Y GESTIÓN DE JUSTIFICACIÓN -->
     <div id="modalDetalle" class="modal-overlay hidden">
         <div class="modal-card">
             <h3 style="margin-top: 0; color: var(--text-primary);">Detalle de la Marcación</h3>
             <div id="modalContenido" style="font-size: 0.85rem; color: var(--text-primary); line-height: 1.5; margin-bottom: 20px;">
                 <!-- Dinámico -->
             </div>
+            
+            <!-- Botones de Acción para Justificaciones -->
+            <div id="modalAccionesJustificacion" class="hidden" style="display: flex; gap: 10px; margin-bottom: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;">
+                <button type="button" id="btnAprobarJustificacion" style="flex: 1; background: #10b981; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 700; cursor: pointer;">✅ Aprobar Justificación</button>
+                <button type="button" id="btnRechazarJustificacion" style="flex: 1; background: #ef4444; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 700; cursor: pointer;">❌ Rechazar Justificación</button>
+            </div>
+
             <div style="text-align: right;">
                 <button type="button" class="btn-detalle" id="cerrarModal" style="background: #64748b;">Cerrar</button>
             </div>
@@ -314,7 +321,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, query, orderBy, deleteDoc, doc } 
+    import { getFirestore, collection, getDocs, query, orderBy, deleteDoc, doc, updateDoc } 
         from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -330,6 +337,7 @@
     let listaRegistrosGlobal = [];
     let registrosFiltradosActuales = [];
     let listaUsuariosGlobal = [];
+    let idRegistroSeleccionado = null;
 
     // Cargar Registros de Asistencia
     async function cargarRegistros() {
@@ -401,6 +409,8 @@
             let claseBadge = "badge-puntual";
             if (reg.estadoPuntualidad === "Impuntual" || reg.estadoPuntualidad === "Descuidado") claseBadge = "badge-impuntual";
             if (reg.estadoPuntualidad === "Apelado / Justificado") claseBadge = "badge-apelado";
+            if (reg.estadoPuntualidad === "Justificación Aprobada") claseBadge = "badge-puntual";
+            if (reg.estadoPuntualidad === "Justificación Rechazada") claseBadge = "badge-impuntual";
 
             let textoObs = reg.observaciones || "-";
             if (reg.justificacion) {
@@ -416,7 +426,7 @@
                 <td>${textoObs}</td>
                 <td>
                     <div style="display: flex; gap: 6px;">
-                        <button class="btn-detalle" onclick="verDetalle('${reg.id}')" title="Ver Detalles">👁️</button>
+                        <button class="btn-detalle" onclick="verDetalle('${reg.id}')" title="Ver Detalles y Gestionar">👁️</button>
                         <button class="btn-icon" onclick="eliminarRegistro('${reg.id}')" title="Eliminar">🗑️</button>
                     </div>
                 </td>
@@ -433,8 +443,8 @@
         if (filtroFecha) {
             const partes = filtroFecha.split("-");
             anioFiltro = partes[0];
-            mesFiltro = String(parseInt(partes[1], 10)); // Quita ceros iniciales (ej: "09" -> "9")
-            diaFiltro = String(parseInt(partes[2], 10));   // Quita ceros iniciales (ej: "04" -> "4")
+            mesFiltro = String(parseInt(partes[1], 10));
+            diaFiltro = String(parseInt(partes[2], 10));
         }
 
         registrosFiltradosActuales = listaRegistrosGlobal.filter(reg => {
@@ -445,8 +455,6 @@
             if (filtroFecha) {
                 coincideFecha = false;
                 const textoFecha = reg.fechaHoy || reg.fechaHora || "";
-                
-                // Extraer componentes numéricos de la fecha guardada en Firestore (ej: "4/9/2026")
                 const match = textoFecha.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
                 if (match) {
                     const dReg = String(parseInt(match[1], 10));
@@ -471,19 +479,60 @@
         const reg = listaRegistrosGlobal.find(r => r.id === id);
         if (!reg) return;
 
+        idRegistroSeleccionado = id;
         const modalContenido = document.getElementById("modalContenido");
+        const modalAccionesJustificacion = document.getElementById("modalAccionesJustificacion");
+
         modalContenido.innerHTML = `
             <p><strong>Practicante:</strong> ${reg.nombre || reg.usuario}</p>
             <p><strong>Tipo:</strong> ${reg.tipo}</p>
             <p><strong>Fecha y Hora:</strong> ${reg.fechaHora}</p>
             <p><strong>Distancia GPS:</strong> ${reg.distanciaMetros ? reg.distanciaMetros + ' metros' : 'N/D'}</p>
-            <p><strong>Puntualidad:</strong> ${reg.estadoPuntualidad}</p>
+            <p><strong>Puntualidad actual:</strong> ${reg.estadoPuntualidad}</p>
             <p><strong>Observación Sistema:</strong> ${reg.observaciones || 'Ninguna'}</p>
             <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 10px 0;">
-            <p><strong>Justificación del Usuario:</strong><br><span style="color: var(--text-secondary);">${reg.justificacion || 'No se ingresó justificación.'}</span></p>
+            <p><strong>Justificación del Usuario:</strong><br><span style="color: #f59e0b; font-weight: 600;">${reg.justificacion || 'No se ingresó justificación.'}</span></p>
         `;
+
+        // Mostrar botones de aprobar/rechazar solo si hay una justificación escrita
+        if (reg.justificacion && reg.justificacion.trim() !== "") {
+            modalAccionesJustificacion.classList.remove("hidden");
+        } else {
+            modalAccionesJustificacion.classList.add("hidden");
+        }
+
         document.getElementById("modalDetalle").classList.remove("hidden");
     };
+
+    // APROBAR JUSTIFICACIÓN
+    document.getElementById("btnAprobarJustificacion").addEventListener("click", async () => {
+        if (!idRegistroSeleccionado) return;
+        try {
+            await updateDoc(doc(db, "registros", idRegistroSeleccionado), {
+                estadoPuntualidad: "Justificación Aprobada"
+            });
+            alert("¡Justificación aprobada exitosamente!");
+            document.getElementById("modalDetalle").classList.add("hidden");
+            cargarRegistros();
+        } catch (e) {
+            alert("Error al aprobar: " + e.message);
+        }
+    });
+
+    // RECHAZAR JUSTIFICACIÓN
+    document.getElementById("btnRechazarJustificacion").addEventListener("click", async () => {
+        if (!idRegistroSeleccionado) return;
+        try {
+            await updateDoc(doc(db, "registros", idRegistroSeleccionado), {
+                estadoPuntualidad: "Justificación Rechazada"
+            });
+            alert("Justificación rechazada.");
+            document.getElementById("modalDetalle").classList.add("hidden");
+            cargarRegistros();
+        } catch (e) {
+            alert("Error al rechazar: " + e.message);
+        }
+    });
 
     window.eliminarRegistro = async function(id) {
         if (confirm("¿Estás seguro de eliminar este registro de asistencia?")) {
@@ -601,7 +650,7 @@
         tabMarcaciones.classList.remove("active");
         seccionUsuarios.classList.remove("hidden");
         seccionMarcaciones.classList.add("hidden");
-        cargarUsuarios(); // Carga dinámicamente los usuarios desde Firebase
+        cargarUsuarios();
     });
 
     cargarRegistros();
