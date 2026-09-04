@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RGPracticas - Panel de Administración</title>
+    <title>RGPracticas - Panel Administrativo</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
         .admin-container {
-            max-width: 900px;
+            max-width: 1100px;
             width: 100%;
             background: var(--card-bg, #1a1f2c);
             padding: 24px;
@@ -17,37 +17,101 @@
             box-sizing: border-box;
             margin: 20px auto;
         }
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .nav-tabs-admin {
+            display: flex;
+            background: var(--input-bg, #111827);
+            padding: 4px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color, #2d3748);
+        }
+        .nav-tab-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary, #a0aec0);
+            padding: 10px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .nav-tab-btn.active {
+            background: #0284c7;
+            color: #ffffff;
+        }
+        .filtros-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .input-filtro {
+            background: var(--input-bg, #111827);
+            border: 1px solid var(--border-color, #2d3748);
+            color: var(--text-primary, #fff);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            outline: none;
+        }
         .table-responsive {
             width: 100%;
             overflow-x: auto;
-            margin-top: 15px;
         }
         table {
             width: 100%;
             border-collapse: collapse;
             text-align: left;
-            font-size: 0.85rem;
+            font-size: 0.82rem;
         }
         th, td {
-            padding: 12px;
+            padding: 12px 10px;
             border-bottom: 1px solid var(--border-color, #2d3748);
             color: var(--text-primary, #fff);
         }
         th {
             font-weight: 700;
             color: var(--text-secondary, #a0aec0);
+            font-size: 0.75rem;
+            text-transform: uppercase;
         }
         .badge {
-            padding: 4px 8px;
+            padding: 4px 10px;
             border-radius: 6px;
             font-size: 0.75rem;
             font-weight: 700;
+            display: inline-block;
         }
+        .badge-puntual { background: rgba(16, 185, 129, 0.2); color: #10b981; }
         .badge-impuntual { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
         .badge-apelado { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
-        .badge-puntual { background: rgba(16, 185, 129, 0.2); color: #10b981; }
         
-        .btn-accion {
+        .btn-icon {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: background 0.2s;
+        }
+        .btn-icon:hover { background: rgba(239, 68, 68, 0.3); }
+
+        .btn-detalle {
             background: #3b82f6;
             color: white;
             border: none;
@@ -57,7 +121,7 @@
             font-size: 0.75rem;
             font-weight: 600;
         }
-        .btn-accion:hover { background: #2563eb; }
+        .btn-detalle:hover { background: #2563eb; }
 
         .modal-overlay {
             position: fixed;
@@ -87,52 +151,108 @@
 <body>
 
     <div class="admin-container">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <!-- HEADER -->
+        <div class="admin-header">
             <div>
-                <h1 style="font-size: 1.5rem; margin: 0; color: var(--text-primary);">Panel de Administración</h1>
-                <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 4px 0 0 0;">Gestión de Asistencia y Comprobantes</p>
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                    <div class="logo-diamond" style="width: 32px; height: 32px; font-size: 0.8rem;"><span>RG</span></div>
+                    <h1 style="font-size: 1.4rem; margin: 0; color: var(--text-primary);">Panel Administrativo</h1>
+                </div>
+                <p style="font-size: 0.82rem; color: var(--text-secondary); margin: 0;">Gestión de asistencia y usuarios</p>
             </div>
-            <button id="btnCerrarSesionAdmin" class="btn-danger-link" style="width: auto; padding: 8px 16px; margin: 0;">Cerrar Sesión</button>
+            
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <button class="theme-toggle-btn" id="btnThemeToggleAdmin" type="button" style="padding: 6px 12px; font-size: 0.8rem;">
+                    <span id="themeIcon">☀️</span> <span id="themeText">Claro</span>
+                </button>
+                <button id="btnCerrarSesionAdmin" class="btn-danger-link" style="width: auto; padding: 7px 14px; margin: 0; font-size: 0.8rem;">Cerrar Sesión</button>
+            </div>
         </div>
 
-        <div style="margin-bottom: 15px;">
-            <input type="text" id="txtFiltroUsuario" placeholder="Filtrar por usuario o nombre..." style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-primary); font-size: 0.85rem; box-sizing: border-box;">
+        <!-- PESTAÑAS SUPERIORES -->
+        <div class="nav-tabs-admin">
+            <button class="nav-tab-btn active" id="tabMarcaciones" type="button">Marcaciones</button>
+            <button class="nav-tab-btn" id="tabUsuarios" type="button">Usuarios Registrados</button>
         </div>
 
+        <!-- BARRA DE FILTROS -->
+        <div class="filtros-bar">
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 700;">FILTRAR USUARIO:</span>
+                <input type="text" id="txtFiltroUsuario" class="input-filtro" placeholder="Buscar por nombre o usuario...">
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 700;">FECHA:</span>
+                <input type="date" id="txtFiltroFecha" class="input-filtro">
+                <button class="input-filtro" id="btnTodosFecha" style="cursor: pointer; background: #0284c7; border: none; color: white; font-weight: 600;">Todos</button>
+            </div>
+        </div>
+
+        <!-- TABLA DE ASISTENCIAS -->
         <div class="table-responsive">
             <table>
                 <thead>
                     <tr>
-                        <th>Fecha / Hora</th>
-                        <th>Usuario</th>
-                        <th>Tipo</th>
-                        <th>Estado</th>
-                        <th>Acción</th>
+                        <th>Practicante</th>
+                        <th>Tipo Marcación</th>
+                        <th>Fecha y Hora</th>
+                        <th>Distancia</th>
+                        <th>Puntualidad</th>
+                        <th>Observaciones / Justificación</th>
+                        <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="tablaRegistrosBody">
-                    <tr><td colspan="5" style="text-align: center; color: var(--text-secondary);">Cargando registros...</td></tr>
+                    <tr><td colspan="7" style="text-align: center; color: var(--text-secondary);">Cargando registros...</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 
-    <!-- MODAL DE DETALLES Y ARCHIVO -->
+    <!-- MODAL DE DETALLE Y ARCHIVO ADJUNTO -->
     <div id="modalDetalle" class="modal-overlay hidden">
         <div class="modal-card">
-            <h3 style="margin-top: 0; color: var(--text-primary);">Detalle de Justificación</h3>
+            <h3 style="margin-top: 0; color: var(--text-primary);">Detalle de la Marcación</h3>
             <div id="modalContenido" style="font-size: 0.85rem; color: var(--text-primary); line-height: 1.5; margin-bottom: 20px;">
-                <!-- Se llena dinámicamente -->
+                <!-- Dinámico -->
             </div>
             <div style="text-align: right;">
-                <button type="button" class="btn-accion" id="cerrarModal" style="background: #64748b;">Cerrar</button>
+                <button type="button" class="btn-detalle" id="cerrarModal" style="background: #64748b;">Cerrar</button>
             </div>
         </div>
     </div>
 
+<script>
+    // Lógica para el cambio de tema en el Admin
+    const btnToggleAdmin = document.getElementById("btnThemeToggleAdmin");
+    const themeIcon = document.getElementById("themeIcon");
+    const themeText = document.getElementById("themeText");
+
+    function aplicarTemaAdmin(tema) {
+        if (tema === "dark") {
+            document.documentElement.setAttribute("data-theme", "dark");
+            themeIcon.textContent = "☀️";
+            themeText.textContent = "Claro";
+        } else {
+            document.documentElement.setAttribute("data-theme", "light");
+            themeIcon.textContent = "🌙";
+            themeText.textContent = "Oscuro";
+        }
+    }
+    const temaGuardado = localStorage.getItem("tema_app") || "dark";
+    aplicarTemaAdmin(temaGuardado);
+
+    btnToggleAdmin.addEventListener("click", () => {
+        const actual = document.documentElement.getAttribute("data-theme");
+        const nuevo = actual === "dark" ? "light" : "dark";
+        aplicarTemaAdmin(nuevo);
+        localStorage.setItem("tema_app", nuevo);
+    });
+</script>
+
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, query, orderBy } 
+    import { getFirestore, collection, getDocs, query, orderBy, deleteDoc, doc } 
         from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -147,27 +267,27 @@
     const db = getFirestore(initializeApp(firebaseConfig));
     let listaRegistrosGlobal = [];
 
-    async function cargarRegistrosAdmin() {
+    async function cargarRegistros() {
         const tbody = document.getElementById("tablaRegistrosBody");
         try {
             const q = query(collection(db, "registros"), orderBy("creado", "desc"));
             const snapshot = await getDocs(q);
             
             listaRegistrosGlobal = [];
-            snapshot.forEach(doc => {
-                listaRegistrosGlobal.push({ id: doc.id, ...doc.data() });
+            snapshot.forEach(d => {
+                listaRegistrosGlobal.push({ id: d.id, ...d.data() });
             });
 
-            renderizarTabla(listaRegistrosGlobal);
+            aplicarFiltros();
         } catch (e) {
-            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #ef4444;">Error al cargar: ${e.message}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #ef4444;">Error al cargar: ${e.message}</td></tr>`;
         }
     }
 
     function renderizarTabla(registros) {
         const tbody = document.getElementById("tablaRegistrosBody");
         if (registros.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-secondary);">No hay registros encontrados.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-secondary);">No se encontraron registros.</td></tr>`;
             return;
         }
 
@@ -179,15 +299,50 @@
             if (reg.estadoPuntualidad === "Impuntual" || reg.estadoPuntualidad === "Descuidado") claseBadge = "badge-impuntual";
             if (reg.estadoPuntualidad === "Apelado / Justificado") claseBadge = "badge-apelado";
 
+            // Mostrar observación o justificación combinada
+            let textoObs = reg.observaciones || "-";
+            if (reg.justificacion) {
+                textoObs = `<span style="color: #f59e0b; font-weight: 600;">Justificación:</span> ${reg.justificacion}`;
+            }
+
             tr.innerHTML = `
-                <td>${reg.fechaHora || 'N/D'}</td>
                 <td><strong>${reg.nombre || reg.usuario}</strong></td>
                 <td>${reg.tipo}</td>
+                <td>${reg.fechaHora || 'N/D'}</td>
+                <td>${reg.distanciaMetros ? reg.distanciaMetros + ' m' : 'N/D'}</td>
                 <td><span class="badge ${claseBadge}">${reg.estadoPuntualidad || 'Puntual'}</span></td>
-                <td><button class="btn-accion" onclick="verDetalle('${reg.id}')">Ver Detalles</button></td>
+                <td>${textoObs}</td>
+                <td>
+                    <div style="display: flex; gap: 6px;">
+                        <button class="btn-detalle" onclick="verDetalle('${reg.id}')" title="Ver Comprobante">👁️</button>
+                        <button class="btn-icon" onclick="eliminarRegistro('${reg.id}')" title="Eliminar">🗑️</button>
+                    </div>
+                </td>
             `;
             tbody.appendChild(tr);
         });
+    }
+
+    function aplicarFiltros() {
+        const filtroUser = document.getElementById("txtFiltroUsuario").value.toLowerCase();
+        const filtroFecha = document.getElementById("txtFiltroFecha").value; // Formato yyyy-mm-dd que da el input date
+
+        const filtrados = listaRegistrosGlobal.filter(reg => {
+            const coincideUsuario = (reg.nombre && reg.nombre.toLowerCase().includes(filtroUser)) || 
+                                    (reg.usuario && reg.usuario.toLowerCase().includes(filtroUser));
+            
+            let coincideFecha = true;
+            if (filtroFecha && reg.fechaHora) {
+                // reg.fechaHora suele guardarse como "4/9/2026, 12:25:55 p. m." o similar, filtramos por coincidencia parcial o transformando
+                // Una forma segura es si guardaste 'fechaHoy' (ej: "4/9/2026") o comparando subcadenas. 
+                // Asumiendo que filtroFecha viene en formato YYYY-MM-DD y fechaHoy es DD/MM/YYYY o similar, validemos con includes o fechaHoy:
+                coincideFecha = (reg.fechaHoy && reg.fechaHoy.includes(filtroFecha.split('-').reverse().join('/'))) || reg.fechaHora.includes(filtroFecha);
+            }
+
+            return coincideUsuario && (filtroFecha ? coincideFecha : true);
+        });
+
+        renderizarTabla(filtrados);
     }
 
     window.verDetalle = function(id) {
@@ -195,57 +350,71 @@
         if (!reg) return;
 
         const modalContenido = document.getElementById("modalContenido");
-        
-        let htmlArchivo = `<p style="color: var(--text-secondary); margin-top: 15px;"><em>Este registro no contiene archivo adjunto.</em></p>`;
-        
+        let htmlArchivo = `<p style="color: var(--text-secondary); margin-top: 10px;"><em>Sin archivo adjunto.</em></p>`;
+
         if (reg.archivoUrl) {
             htmlArchivo = `
-                <div style="margin-top: 15px; padding: 12px; background: var(--input-bg, #111827); border-radius: 10px; border: 1px solid var(--border-color);">
-                    <p style="margin: 0 0 8px 0; font-weight: 700; color: var(--text-primary);">📎 Comprobante del Usuario:</p>
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <a href="${reg.archivoUrl}" target="_blank" class="btn-accion" style="text-decoration: none; display: inline-flex; align-items: center; gap: 5px;">
-                            👁️ Ver Archivo
-                        </a>
-                        <a href="${reg.archivoUrl}" download target="_blank" class="btn-accion" style="text-decoration: none; display: inline-flex; align-items: center; gap: 5px; background: #10b981;">
-                            ⬇️ Descargar
-                        </a>
+                <div style="margin-top: 12px; padding: 10px; background: var(--input-bg); border-radius: 8px; border: 1px solid var(--border-color);">
+                    <p style="margin: 0 0 6px 0; font-weight: 700;">📎 Comprobante Enviado:</p>
+                    <div style="display: flex; gap: 8px;">
+                        <a href="${reg.archivoUrl}" target="_blank" class="btn-detalle" style="text-decoration: none;">👁️ Ver Archivo</a>
+                        <a href="${reg.archivoUrl}" download target="_blank" class="btn-detalle" style="text-decoration: none; background: #10b981;">⬇️ Descargar</a>
                     </div>
                 </div>
             `;
         }
 
         modalContenido.innerHTML = `
-            <p><strong>Usuario:</strong> ${reg.nombre || reg.usuario}</p>
-            <p><strong>Tipo de Registro:</strong> ${reg.tipo}</p>
+            <p><strong>Practicante:</strong> ${reg.nombre || reg.usuario}</p>
+            <p><strong>Tipo:</strong> ${reg.tipo}</p>
             <p><strong>Fecha y Hora:</strong> ${reg.fechaHora}</p>
-            <p><strong>Distancia GPS:</strong> ${reg.distanciaMetros ? reg.distanciaMetros + ' metros' : 'N/D'}</p>
-            <p><strong>Observaciones:</strong> ${reg.observaciones || 'Ninguna'}</p>
-            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 12px 0;">
-            <p><strong>Motivo / Justificación:</strong><br><span style="color: var(--text-secondary);">${reg.justificacion || 'No se ingresó justificación.'}</span></p>
+            <p><strong>Puntualidad:</strong> ${reg.estadoPuntualidad}</p>
+            <p><strong>Observación Sistema:</strong> ${reg.observaciones || 'Ninguna'}</p>
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 10px 0;">
+            <p><strong>Justificación del Usuario:</strong><br><span style="color: var(--text-secondary);">${reg.justificacion || 'No se ingresó justificación.'}</span></p>
             ${htmlArchivo}
         `;
-
         document.getElementById("modalDetalle").classList.remove("hidden");
+    };
+
+    window.eliminarRegistro = async function(id) {
+        if (confirm("¿Estás seguro de eliminar este registro?")) {
+            try {
+                await deleteDoc(doc(db, "registros", id));
+                cargarRegistros();
+            } catch (e) {
+                alert("Error al eliminar: " + e.message);
+            }
+        }
     };
 
     document.getElementById("cerrarModal").addEventListener("click", () => {
         document.getElementById("modalDetalle").classList.add("hidden");
     });
 
-    document.getElementById("txtFiltroUsuario").addEventListener("input", (e) => {
-        const texto = e.target.value.toLowerCase();
-        const filtrados = listaRegistrosGlobal.filter(r => 
-            (r.nombre && r.nombre.toLowerCase().includes(texto)) || 
-            (r.usuario && r.usuario.toLowerCase().includes(texto))
-        );
-        renderizarTabla(filtrados);
+    document.getElementById("txtFiltroUsuario").addEventListener("input", aplicarFiltros);
+    document.getElementById("txtFiltroFecha").addEventListener("change", aplicarFiltros);
+    document.getElementById("btnTodosFecha").addEventListener("click", () => {
+        document.getElementById("txtFiltroFecha").value = "";
+        aplicarFiltros();
     });
 
     document.getElementById("btnCerrarSesionAdmin").addEventListener("click", () => {
         window.location.href = "index.html";
     });
 
-    cargarRegistrosAdmin();
+    // Pestañas (simulación visual de cambio de sección)
+    document.getElementById("tabMarcaciones").addEventListener("click", () => {
+        document.getElementById("tabMarcaciones").classList.add("active");
+        document.getElementById("tabUsuarios").classList.remove("active");
+    });
+    document.getElementById("tabUsuarios").addEventListener("click", () => {
+        document.getElementById("tabUsuarios").classList.add("active");
+        document.getElementById("tabMarcaciones").classList.remove("active");
+        alert("Apartado de Usuarios Registrados en desarrollo. (Puedes gestionarlos directamente desde tu consola de Firebase).");
+    });
+
+    cargarRegistros();
 </script>
 </body>
 </html>
