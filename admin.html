@@ -427,18 +427,41 @@
 
     function aplicarFiltros() {
         const filtroUser = document.getElementById("txtFiltroUsuario").value.toLowerCase();
-        const filtroFecha = document.getElementById("txtFiltroFecha").value;
+        const filtroFecha = document.getElementById("txtFiltroFecha").value; // Formato: AAAA-MM-DD
+
+        let anioFiltro = "", mesFiltro = "", diaFiltro = "";
+        if (filtroFecha) {
+            const partes = filtroFecha.split("-");
+            anioFiltro = partes[0];
+            mesFiltro = String(parseInt(partes[1], 10)); // Quita ceros iniciales (ej: "09" -> "9")
+            diaFiltro = String(parseInt(partes[2], 10));   // Quita ceros iniciales (ej: "04" -> "4")
+        }
 
         registrosFiltradosActuales = listaRegistrosGlobal.filter(reg => {
             const coincideUsuario = (reg.nombre && reg.nombre.toLowerCase().includes(filtroUser)) || 
                                     (reg.usuario && reg.usuario.toLowerCase().includes(filtroUser));
             
             let coincideFecha = true;
-            if (filtroFecha && reg.fechaHora) {
-                coincideFecha = (reg.fechaHoy && reg.fechaHoy.includes(filtroFecha.split('-').reverse().join('/'))) || reg.fechaHora.includes(filtroFecha);
+            if (filtroFecha) {
+                coincideFecha = false;
+                const textoFecha = reg.fechaHoy || reg.fechaHora || "";
+                
+                // Extraer componentes numéricos de la fecha guardada en Firestore (ej: "4/9/2026")
+                const match = textoFecha.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+                if (match) {
+                    const dReg = String(parseInt(match[1], 10));
+                    const mReg = String(parseInt(match[2], 10));
+                    const aReg = match[3];
+
+                    if (dReg === diaFiltro && mReg === mesFiltro && aReg === anioFiltro) {
+                        coincideFecha = true;
+                    }
+                } else if (textoFecha.includes(filtroFecha)) {
+                    coincideFecha = true;
+                }
             }
 
-            return coincideUsuario && (filtroFecha ? coincideFecha : true);
+            return coincideUsuario && coincideFecha;
         });
 
         renderizarTabla(registrosFiltradosActuales);
