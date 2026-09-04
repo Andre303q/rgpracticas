@@ -85,7 +85,7 @@
 
                 <div id="alertMarcacion" class="alert-msg hidden"></div>
 
-                <!-- BLOQUE DE JUSTIFICACIÓN -->
+                <!-- BLOQUE DE JUSTIFICACIÓN (SOLO TEXTO) -->
                 <div id="boxJustificar" class="hidden" style="margin-top: 18px; border-top: 1px dashed var(--border-color); padding-top: 16px;">
                     <label style="font-size: 0.75rem; font-weight: 800; color: var(--status-warning); display: block; margin-bottom: 6px;">⚠️ JUSTIFICAR IMPUNTUALIDAD / SALIDA</label>
                     
@@ -96,17 +96,7 @@
                         </div>
                     </div>
 
-                    <div class="input-block" style="margin-top: 12px;">
-                        <label style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 6px;">📎 COMPROBANTE O DOCUMENTO (MÁX. 50 MB):</label>
-                        
-                        <label for="archivoComprobante" style="display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--input-bg); border: 2px dashed var(--border-color); padding: 12px; border-radius: 10px; cursor: pointer; text-align: center;">
-                            <span style="font-size: 1.2rem;">📂</span>
-                            <span id="nombreArchivoLabel" style="font-size: 0.8rem; color: var(--text-primary); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Toca aquí para adjuntar archivo</span>
-                        </label>
-                        <input type="file" id="archivoComprobante" style="display: none;">
-                    </div>
-
-                    <button class="btn-primary" id="btnEnviarJustificacion" type="button" style="background: var(--status-warning); box-shadow: none; margin-top: 12px;">Subir archivo...</button>
+                    <button class="btn-primary" id="btnEnviarJustificacion" type="button" style="background: var(--status-warning); box-shadow: none; margin-top: 12px;">Enviar Motivo</button>
                 </div>
 
                 <button class="btn-danger-link" id="btnCerrarSesion" type="button">Cerrar Sesión</button>
@@ -147,8 +137,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, collection, serverTimestamp, query, where, getDocs } 
         from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-    import { getStorage, ref, uploadBytes, getDownloadURL } 
-        from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyB6KT4Gw-O4NDhsAREAeAdAmrIuMH53ZyQ",
@@ -159,9 +147,7 @@
         appId: "1:378103051147:web:0c30387cc661d75e0ff58e"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const storage = getStorage(app);
+    const db = getFirestore(initializeApp(firebaseConfig));
 
     const LAT_REF = 14.6045042; 
     const LON_REF = -90.5163326;
@@ -174,15 +160,6 @@
     let modoActual = 'login';
     let geoWatchId = null;
     let ultimoRegistroId = null;
-
-    document.getElementById("archivoComprobante").addEventListener("change", function(e) {
-        const label = document.getElementById("nombreArchivoLabel");
-        if (e.target.files && e.target.files[0]) {
-            label.textContent = e.target.files[0].name;
-        } else {
-            label.textContent = "Toca aquí para adjuntar archivo";
-        }
-    });
 
     window.cambiarModo = function(modo) {
         modoActual = modo;
@@ -350,7 +327,6 @@
 
     document.getElementById("btnEnviarJustificacion").addEventListener("click", async () => {
         const texto = document.getElementById("txtJustificacion").value.trim();
-        const archivoInput = document.getElementById("archivoComprobante");
         const alertMarcacion = document.getElementById("alertMarcacion");
         const btnEnviar = document.getElementById("btnEnviarJustificacion");
 
@@ -361,33 +337,22 @@
 
         try {
             btnEnviar.disabled = true;
-            btnEnviar.textContent = "Subiendo archivo...";
-            let archivoUrl = "";
-
-            if (archivoInput.files && archivoInput.files[0]) {
-                const archivo = archivoInput.files[0];
-                const storageRef = ref(storage, `comprobantes/${Date.now()}_${archivo.name}`);
-                const snapshot = await uploadBytes(storageRef, archivo);
-                archivoUrl = await getDownloadURL(snapshot.ref);
-            }
+            btnEnviar.textContent = "Enviando...";
 
             await updateDoc(doc(db, "registros", ultimoRegistroId), {
                 justificacion: texto,
-                archivoUrl: archivoUrl,
                 estadoPuntualidad: "Apelado / Justificado",
                 estadoJustificacion: "Pendiente"
             });
 
-            mostrarAlerta(alertMarcacion, "Justificación y archivo subidos con éxito.", "success");
+            mostrarAlerta(alertMarcacion, "Justificación enviada con éxito.", "success");
             document.getElementById("boxJustificar").classList.add("hidden");
             document.getElementById("txtJustificacion").value = "";
-            document.getElementById("archivoComprobante").value = "";
-            document.getElementById("nombreArchivoLabel").textContent = "Toca aquí para adjuntar archivo";
         } catch (e) {
-            mostrarAlerta(alertMarcacion, "Error al subir: " + e.message, "error");
+            mostrarAlerta(alertMarcacion, "Error al enviar: " + e.message, "error");
         } finally {
             btnEnviar.disabled = false;
-            btnEnviar.textContent = "Subir archivo...";
+            btnEnviar.textContent = "Enviar Motivo";
         }
     });
 
