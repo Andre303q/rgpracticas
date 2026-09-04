@@ -3,6 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RG PRACTICAS - Portal de Asistencia</title>
+    
+    <!-- PWA y Favicon -->
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="apple-touch-icon" href="logo.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0d1b2a">
+
+    <!-- Estilos -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Librería FontAwesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="dark-theme">
+
+    <div class="app-wrapper">
+        <div class="card">
+            
+            <!-- Botón Cambio de Tema -->
+            <div class="theme-switch-container">
+                <button class="theme-toggle-btn" id="btnThemeToggle" type="button">
+                    <span id="themeIcon">🌙</span> <span id="themeText">Oscuro</span>
+                </button>
+            </div>
+
+            <!-- Cabecera / Logo -->
+            <div class="brand-box">
+                <img src="logo.png" alt="RG Practicas Logo" class="app-logo">
+                <p id="subtituloCard">Portal de Asistencia</p>
+            </div>
+
+            <!-- Navegación Ingresar / Registro -->
+            <div class="nav-tabs" id="tabsAuth">
+                <button class="tab-link active" id="tabLogin" type="button" onclick="cambiarModo('login')">Ingresar</button>
+                <button class="tab-link" id="tabRegister" type="button" onclick="cambiarModo('registro')">Registro</button>
+            </div>
+
+            <!-- Formulario de Autenticación -->
+            <form id="authForm" onsubmit="procesarAutenticacion(event)">
+                
+                <!-- Campo Nombre Completo (Solo en Registro) -->
+                <div class="form-group hidden" id="groupNombre">
+                    <label for="inputNombre">NOMBRE COMPLETO</label>
+                    <div class="input-icon-wrapper">
+                        <i class="fa-solid fa-id-card"></i>
+                        <input type="text" id="inputNombre" placeholder="Ej. Juan Pérez">
+                    </div>
+                </div>
+
+                <!-- Campo Usuario -->
+                <div class="form-group" id="groupUsuario">
+                    <label for="inputUsuario">USUARIO</label>
+                    <div class="input-icon-wrapper">
+                        <i class="fa-solid fa-user"></i>
+                        <input type="text" id="inputUsuario" placeholder="Ej. carlos123" required>
+                    </div>
+                </div>
+
+                <!-- Campo Contraseña -->
+                <div class="form-group" id="groupPassword">
+                    <label for="inputPassword">CONTRASEÑA</label>
+                    <div class="input-icon-wrapper">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" id="inputPassword" placeholder="••••••••" required>
+                    </div>
+                </div>
+
+                <!-- Mensajes de Alerta/Error -->
+                <div id="mensajeAuth" class="alert-message hidden"></div>
+
+                <!-- Botón Principal -->
+                <button type="submit" class="btn-primary" id="btnSubmitAuth">Iniciar Sesión</button>
+            </form>
+
+            <!-- Vista de Marcación (Oculta hasta Iniciar Sesión) -->
+            <div id="vistaMarcacion" class="hidden">
+                <div class="user-welcome">
+                    <h3>¡Hola, <span id="nombreUsuarioActivo">Usuario</span>!</h3>
+                    <p id="fechaActualDisplay"></p>
+                </div>
+
+                <div class="clock-display">
+                    <h1 id="relojDigital">00:00:00</h1>
+                </div>
+
+                <div class="action-buttons">
+                    <button type="button" class="btn-action btn-entrada" onclick="registrarAsistencia('Entrada')">
+                        <i class="fa-solid fa-right-to-bracket"></i> Marcar Entrada
+                    </button>
+                    <button type="button" class="btn-action btn-salida" onclick="registrarAsistencia('Salida')">
+                        <i class="fa-solid fa-right-from-bracket"></i> Marcar Salida
+                    </button>
+                </div>
+
+                <div id="mensajeMarcacion" class="alert-message hidden"></div>
+
+                <button type="button" class="btn-secondary" onclick="cerrarSesion()">Cerrar Sesión</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Script Principal -->
+    <script src="script.js"></script>
+
+    <!-- Registro de Service Worker para PWA -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker registrado con éxito', reg))
+                    .catch(err => console.warn('Error al registrar Service Worker', err));
+            });
+        }
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RG PRACTICAS - Asistencia</title>
 
     <!-- ICONOS Y MANIFEST -->
