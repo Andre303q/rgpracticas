@@ -95,7 +95,7 @@
         }
 
         /* ==========================================
-           ESTILOS DE ETIQUETAS DE PUNTUALIDAD (COLORES)
+           ESTILOS DE ETIQUETAS DE PUNTUALIDAD
            ========================================== */
         .badge-estado {
             padding: 6px 12px;
@@ -130,6 +130,17 @@
             gap: 6px;
             align-items: center;
         }
+        .btn-comprobante {
+            display: inline-block;
+            margin-top: 4px;
+            padding: 3px 8px;
+            background: var(--primary-blue);
+            color: white;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            text-decoration: none;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -156,22 +167,19 @@
 
             <!-- PESTAÑAS DE NAVEGACIÓN -->
             <div class="nav-tabs" id="tabsAdmin" style="margin-bottom: 20px;">
-                <button class="tab-link active" id="tabMarcaciones" type="button" onclick="cambiarVistaAdmin('marcaciones')">Marcaciones</button>
+                <button class="tab-link active" id="tabMarcaciones" type="button" onclick="cambiarVistaAdmin('marcaciones')">Marcaciones y Ausencias</button>
                 <button class="tab-link" id="tabUsuarios" type="button" onclick="cambiarVistaAdmin('usuarios')">Usuarios Registrados</button>
             </div>
 
             <!-- VISTA 1: MARCACIONES Y FILTROS -->
             <div id="seccionMarcaciones">
                 <div class="toolbar-container">
-                    <!-- GRUPO DE FILTROS (FECHA Y USUARIO) -->
                     <div class="filters-group">
-                        <!-- FILTRO DE FECHA -->
                         <div class="filter-box">
                             <span style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary);">FECHA:</span>
                             <input type="date" id="inputFiltroFecha" onchange="aplicarFiltrosMultiples()">
                         </div>
 
-                        <!-- FILTRO DE USUARIO -->
                         <div class="filter-box">
                             <span style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary);">USUARIO:</span>
                             <select id="selectFiltroUsuario" onchange="aplicarFiltrosMultiples()">
@@ -179,29 +187,27 @@
                             </select>
                         </div>
 
-                        <!-- BOTÓN LIMPIAR FILTROS -->
                         <button type="button" onclick="limpiarFiltros()" style="background: var(--primary-blue); color: white; border: none; padding: 9px 14px; border-radius: 10px; font-size: 0.75rem; font-weight: 700; cursor: pointer;">Limpiar</button>
                     </div>
 
-                    <!-- BOTONES DE EXPORTACIÓN -->
                     <div class="export-group">
                         <button type="button" class="btn-primary" onclick="exportarExcel()" style="background-color: #10b981; width: auto; padding: 10px 16px; font-size: 0.82rem; box-shadow: none;">📊 Excel</button>
                         <button type="button" class="btn-primary" onclick="exportarPDF()" style="background-color: #ef4444; width: auto; padding: 10px 16px; font-size: 0.82rem; box-shadow: none;">📄 PDF</button>
                     </div>
                 </div>
 
-                <h3 style="font-size: 1rem; color: var(--text-primary); margin-bottom: 10px;">🕒 Registro de Asistencias</h3>
+                <h3 style="font-size: 1rem; color: var(--text-primary); margin-bottom: 10px;">🕒 Registro de Asistencias y Ausencias</h3>
 
                 <div class="admin-table-container">
                     <table id="tablaAsistencias">
                         <thead>
                             <tr>
                                 <th>Practicante</th>
-                                <th>Tipo Marcación</th>
+                                <th>Tipo / Estado</th>
                                 <th>Fecha y Hora</th>
                                 <th>Distancia</th>
                                 <th>Puntualidad</th>
-                                <th>Observaciones / Justificación</th>
+                                <th>Observaciones / Comprobante</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -312,19 +318,15 @@
         const selectUsuario = document.getElementById("selectFiltroUsuario");
 
         try {
-            // 1. Cargar Usuarios
             const snapUsu = await getDocs(collection(db, "usuarios"));
             listaUsuariosGlobal = [];
             let htmlUsu = "";
             let optionsUsuarioHtml = `<option value="">Todos los usuarios</option>`;
 
-            if (snapUsu.empty) {
-                cuerpoTablaUsu.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-secondary);">No hay usuarios registrados.</td></tr>`;
-            } else {
+            if (!snapUsu.empty) {
                 snapUsu.forEach((doc) => {
                     const u = doc.data();
                     listaUsuariosGlobal.push(u);
-                    
                     const nombreUsuario = u.nombre || u.usuario || 'Sin Nombre';
                     optionsUsuarioHtml += `<option value="${nombreUsuario}">${nombreUsuario}</option>`;
 
@@ -340,7 +342,6 @@
                 selectUsuario.innerHTML = optionsUsuarioHtml;
             }
 
-            // 2. Cargar Registros
             const qReg = query(collection(db, "registros"), orderBy("creado", "desc"));
             const snapReg = await getDocs(qReg);
             listaRegistrosGlobal = [];
@@ -372,27 +373,31 @@
         datos.forEach((r) => {
             const estado = (r.estadoPuntualidad || "").toLowerCase();
             
-            // Lógica de colores según el estado de puntualidad
             let claseBadge = "badge-gris";
             if (estado.includes("puntual") || estado.includes("temprano")) {
                 claseBadge = "badge-verde";
-            } else if (estado.includes("tarde") || estado.includes("impuntual") || estado.includes("retraso") || estado.includes("descuidado")) {
+            } else if (estado.includes("tarde") || estado.includes("impuntual") || estado.includes("retraso")) {
                 claseBadge = "badge-rojo";
-            } else if (estado.includes("permiso") || estado.includes("justificado")) {
+            } else if (estado.includes("permiso") || estado.includes("justificado") || estado.includes("apelado")) {
                 claseBadge = "badge-amarillo";
+            } else if (estado.includes("no se presentó") || estado.includes("ausente")) {
+                claseBadge = "badge-rojo";
             }
 
             let textoObservacion = r.observaciones || '-';
             if (r.justificacion) {
-                textoObservacion = `<strong style="color: var(--status-warning);">Justificación:</strong> ${r.justificacion} <br><small style="color: var(--text-secondary);">${r.observaciones || ''}</small>`;
+                textoObservacion = `<strong style="color: var(--status-warning);">Motivo:</strong> ${r.justificacion}`;
+            }
+            if (r.archivoUrl) {
+                textoObservacion += `<br><a href="${r.archivoUrl}" target="_blank" class="btn-comprobante">📎 Ver Comprobante / Imagen</a>`;
             }
 
             html += `
                 <tr>
                     <td><strong>${r.nombre || r.usuario}</strong></td>
-                    <td>${r.tipo}</td>
-                    <td>${r.fechaHora}</td>
-                    <td>${r.distanciaMetros} m</td>
+                    <td>${r.tipo || 'Asistencia'}</td>
+                    <td>${r.fechaHora || r.fechaHoy}</td>
+                    <td>${r.distanciaMetros ? r.distanciaMetros + ' m' : 'N/A'}</td>
                     <td><span class="badge-estado ${claseBadge}">${r.estadoPuntualidad || 'Registrado'}</span></td>
                     <td>${textoObservacion}</td>
                     <td>
@@ -408,14 +413,9 @@
         cuerpoTablaReg.innerHTML = html;
     }
 
-    // Función global para eliminar registros desde la web
     window.eliminarRegistro = async function(idFirebase) {
-        if (!idFirebase) {
-            alert("Error: No se encontró el ID de este registro.");
-            return;
-        }
-
-        const confirmar = confirm("¿Estás seguro de que deseas eliminar este registro de asistencia?");
+        if (!idFirebase) return;
+        const confirmar = confirm("¿Estás seguro de que deseas eliminar este registro?");
         if (!confirmar) return;
 
         try {
@@ -423,12 +423,10 @@
             alert("Registro eliminado correctamente.");
             cargarDatosAdmin(); 
         } catch (error) {
-            console.error("Error al eliminar:", error);
             alert("No se pudo eliminar el registro: " + error.message);
         }
     }
 
-    // Filtrado combinado (Fecha y Usuario simultáneos)
     window.aplicarFiltrosMultiples = function() {
         const inputFechaVal = document.getElementById("inputFiltroFecha").value;
         const usuarioSeleccionado = document.getElementById("selectFiltroUsuario").value;
@@ -440,13 +438,11 @@
         }
 
         let filtrados = listaRegistrosGlobal.filter(r => {
-            // Filtro por fecha (si se seleccionó una)
             let coincideFecha = true;
             if (fechaFiltradaFormat) {
                 coincideFecha = (r.fechaHoy === fechaFiltradaFormat);
             }
 
-            // Filtro por usuario (si se seleccionó uno)
             let coincideUsuario = true;
             if (usuarioSeleccionado) {
                 const nombreRegistro = (r.nombre || r.usuario || "").trim().toLowerCase();
@@ -473,10 +469,7 @@
 <script>
     function exportarExcel() {
         const tabla = document.getElementById("tablaAsistencias");
-        if (!tabla) {
-            alert("No se encontró la tabla de asistencias.");
-            return;
-        }
+        if (!tabla) return;
         const archivo = XLSX.utils.table_to_book(tabla, { sheet: "Asistencias" });
         XLSX.writeFile(archivo, "Reporte_Asistencias_RGPracticas.xlsx");
     }
