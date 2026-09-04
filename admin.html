@@ -82,37 +82,6 @@
             display: flex;
             gap: 10px;
         }
-
-        /* ==========================================
-           CLASES DE COLORES PARA LAS ETIQUETAS (BADGES)
-           ========================================== */
-        .badge-estado {
-            padding: 5px 10px;
-            border-radius: 8px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            display: inline-block;
-        }
-        .badge-verde {
-            background-color: #ecfdf5 !important;
-            color: #10b981 !important;
-            border: 1px solid #a7f3d0 !important;
-        }
-        .badge-rojo {
-            background-color: #fef2f2 !important;
-            color: #ef4444 !important;
-            border: 1px solid #fecaca !important;
-        }
-        .badge-amarillo {
-            background-color: #fef3c7 !important;
-            color: #f59e0b !important;
-            border: 1px solid #fde68a !important;
-        }
-        .badge-gris {
-            background-color: #f1f5f9 !important;
-            color: #64748b !important;
-            border: 1px solid #cbd5e1 !important;
-        }
     </style>
 </head>
 <body>
@@ -172,10 +141,11 @@
                                 <th>Distancia</th>
                                 <th>Puntualidad</th>
                                 <th>Observaciones</th>
+                                <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="cuerpoTablaRegistros">
-                            <tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">Cargando registros...</td></tr>
+                            <tr><td colspan="7" style="text-align: center; color: var(--text-secondary);">Cargando registros...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -260,7 +230,7 @@
 <!-- SCRIPT FIREBASE Y DATOS -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, query, orderBy, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyB6KT4Gw-O4NDhsAREAeAdAmrIuMH53ZyQ",
@@ -285,10 +255,13 @@
             listaRegistrosGlobal = [];
 
             if (snapReg.empty) {
-                cuerpoTablaReg.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">No hay registros disponibles.</td></tr>`;
+                cuerpoTablaReg.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-secondary);">No hay registros disponibles.</td></tr>`;
             } else {
-                snapReg.forEach((doc) => {
-                    listaRegistrosGlobal.push(doc.data());
+                snapReg.forEach((documento) => {
+                    // Guardamos tanto los datos como el id único del documento de Firebase
+                    const dataReg = documento.data();
+                    dataReg.idFirebase = documento.id; 
+                    listaRegistrosGlobal.push(dataReg);
                 });
                 renderizarTablaRegistros(listaRegistrosGlobal);
             }
@@ -313,14 +286,14 @@
             }
 
         } catch (error) {
-            cuerpoTablaReg.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #ef4444;">Error al cargar: ${error.message}</td></tr>`;
+            cuerpoTablaReg.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #ef4444;">Error al cargar: ${error.message}</td></tr>`;
         }
     }
 
     window.renderizarTablaRegistros = function(datos) {
         const cuerpoTablaReg = document.getElementById("cuerpoTablaRegistros");
         if (datos.length === 0) {
-            cuerpoTablaReg.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">No hay registros para esta fecha.</td></tr>`;
+            cuerpoTablaReg.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-secondary);">No hay registros para esta fecha.</td></tr>`;
             return;
         }
 
@@ -328,9 +301,7 @@
         datos.forEach((r) => {
             const estado = (r.estadoPuntualidad || "").toLowerCase();
             
-            // Asignación de clases CSS con !important integrado en la cabecera
             let claseBadge = "badge-gris";
-            
             if (estado.includes("puntual") || estado.includes("temprano")) {
                 claseBadge = "badge-verde";
             } else if (estado.includes("tarde") || estado.includes("impuntual") || estado.includes("retraso")) {
@@ -347,10 +318,35 @@
                     <td>${r.distanciaMetros} m</td>
                     <td><span class="badge-estado ${claseBadge}">${r.estadoPuntualidad || 'Registrado'}</span></td>
                     <td>${r.observaciones || '-'}</td>
+                    <td>
+                        <button type="button" onclick="eliminarRegistro('${r.idFirebase}')" style="background-color: #ef4444; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.75rem; font-weight: 700;">
+                            🗑️ Borrar
+                        </button>
+                    </td>
                 </tr>
             `;
         });
         cuerpoTablaReg.innerHTML = html;
+    }
+
+    // Función global para eliminar registros desde la web
+    window.eliminarRegistro = async function(idFirebase) {
+        if (!idFirebase) {
+            alert("Error: No se encontró el ID de este registro.");
+            return;
+        }
+
+        const confirmar = confirm("¿Estás seguro de que deseas eliminar este registro de asistencia?");
+        if (!confirmar) return;
+
+        try {
+            await deleteDoc(doc(db, "registros", idFirebase));
+            alert("Registro eliminado correctamente.");
+            cargarDatosAdmin(); // Recarga la tabla de inmediato
+        } catch (error) {
+            console.error("Error al eliminar:", error);
+            alert("No se pudo eliminar el registro: " + error.message);
+        }
     }
 
     window.filtrarRegistrosPorFecha = function() {
@@ -369,6 +365,7 @@
         renderizarTablaRegistros(listaRegistrosGlobal);
     }
 
+    // Ejecutar al iniciar
     cargarDatosAdmin();
 </script>
 
