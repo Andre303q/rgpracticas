@@ -85,7 +85,7 @@
 
                 <div id="alertMarcacion" class="alert-msg hidden"></div>
 
-                <!-- BLOQUE DE JUSTIFICACIÓN CON OPCIÓN DE ARCHIVO -->
+                <!-- BLOQUE DE JUSTIFICACIÓN CON DISEÑO MEJORADO DE ARCHIVOS -->
                 <div id="boxJustificar" class="hidden" style="margin-top: 18px; border-top: 1px dashed var(--border-color); padding-top: 16px;">
                     <label style="font-size: 0.75rem; font-weight: 800; color: var(--status-warning); display: block; margin-bottom: 6px;">⚠️ JUSTIFICAR IMPUNTUALIDAD / SALIDA</label>
                     
@@ -96,13 +96,18 @@
                         </div>
                     </div>
 
-                    <!-- OPCIÓN PARA ADJUNTAR ARCHIVO / COMPROBANTE -->
-                    <div class="input-block" style="margin-top: 10px;">
-                        <label style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 4px;">📎 Adjuntar Comprobante o Imagen (Opcional):</label>
-                        <input type="file" id="archivoComprobante" accept="image/*,.pdf" style="font-size: 0.8rem; color: var(--text-primary); background: var(--input-bg); padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); width: 100%; box-sizing: border-box;">
+                    <!-- NUEVO SELECTOR DE ARCHIVOS ESTILIZADO -->
+                    <div class="input-block" style="margin-top: 12px;">
+                        <label style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 6px;">📎 COMPROBANTE O DOCUMENTO (MÁX. 50 MB):</label>
+                        
+                        <label for="archivoComprobante" style="display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--input-bg); border: 2px dashed var(--border-color); padding: 12px; border-radius: 10px; cursor: pointer; transition: all 0.3s ease; text-align: center;">
+                            <span style="font-size: 1.2rem;">📂</span>
+                            <span id="nombreArchivoLabel" style="font-size: 0.8rem; color: var(--text-primary); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Toca aquí para adjuntar archivo</span>
+                        </label>
+                        <input type="file" id="archivoComprobante" accept="image/*,.pdf,.doc,.docx" style="display: none;">
                     </div>
 
-                    <button class="btn-primary" id="btnEnviarJustificacion" type="button" style="background: var(--status-warning); box-shadow: none; margin-top: 10px;">Enviar Motivo</button>
+                    <button class="btn-primary" id="btnEnviarJustificacion" type="button" style="background: var(--status-warning); box-shadow: none; margin-top: 12px;">Enviar Motivo</button>
                 </div>
 
                 <button class="btn-danger-link" id="btnCerrarSesion" type="button">Cerrar Sesión</button>
@@ -146,6 +151,8 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, collection, serverTimestamp, query, where, getDocs } 
         from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } 
+        from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyB6KT4Gw-O4NDhsAREAeAdAmrIuMH53ZyQ",
@@ -156,7 +163,9 @@
         appId: "1:378103051147:web:0c30387cc661d75e0ff58e"
     };
 
-    const db = getFirestore(initializeApp(firebaseConfig));
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
 
     const LAT_REF = 14.6045042; 
     const LON_REF = -90.5163326;
@@ -169,6 +178,24 @@
     let modoActual = 'login';
     let geoWatchId = null;
     let ultimoRegistroId = null;
+
+    // Mostrar el nombre del archivo seleccionado de forma bonita
+    document.getElementById("archivoComprobante").addEventListener("change", function(e) {
+        const label = document.getElementById("nombreArchivoLabel");
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            // Validar límite de 50 MB
+            if (file.size > 50 * 1024 * 1024) {
+                alert("El archivo es demasiado pesado. El límite máximo es de 50 MB.");
+                e.target.value = "";
+                label.textContent = "Toca aquí para adjuntar archivo";
+                return;
+            }
+            label.textContent = file.name;
+        } else {
+            label.textContent = "Toca aquí para adjuntar archivo";
+        }
+    });
 
     window.cambiarModo = function(modo) {
         modoActual = modo;
@@ -356,6 +383,7 @@
         const texto = document.getElementById("txtJustificacion").value.trim();
         const archivoInput = document.getElementById("archivoComprobante");
         const alertMarcacion = document.getElementById("alertMarcacion");
+        const btnEnviar = document.getElementById("btnEnviarJustificacion");
 
         if (!texto || !ultimoRegistroId) {
             alert("Por favor ingresa un motivo.");
@@ -363,15 +391,16 @@
         }
 
         try {
+            btnEnviar.disabled = true;
+            btnEnviar.textContent = "Subiendo archivo...";
             let archivoUrl = "";
 
+            // Subida correcta a Firebase Storage (Soporta hasta más de 50 MB sin saturar Firestore)
             if (archivoInput.files && archivoInput.files[0]) {
                 const archivo = archivoInput.files[0];
-                archivoUrl = await new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onload = (e) => resolve(e.target.result);
-                    reader.readAsDataURL(archivo);
-                });
+                const rutaStorage = storageRef(storage, `comprobantes/${usuarioActual.usuario}_${Date.now()}_${archivo.name}`);
+                const snapshot = await uploadBytes(rutaStorage, archivo);
+                archivoUrl = await getDownloadURL(snapshot.ref);
             }
 
             await updateDoc(doc(db, "registros", ultimoRegistroId), {
@@ -385,8 +414,12 @@
             document.getElementById("boxJustificar").classList.add("hidden");
             document.getElementById("txtJustificacion").value = "";
             document.getElementById("archivoComprobante").value = "";
+            document.getElementById("nombreArchivoLabel").textContent = "Toca aquí para adjuntar archivo";
         } catch (e) {
             mostrarAlerta(alertMarcacion, "Error al enviar: " + e.message, "error");
+        } finally {
+            btnEnviar.disabled = false;
+            btnEnviar.textContent = "Enviar Motivo";
         }
     });
 
