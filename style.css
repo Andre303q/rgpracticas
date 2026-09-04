@@ -1,5 +1,5 @@
 :root {
-    /* MODO DIURNO (Por defecto) */
+    /* MODO CLARO (Predeterminado) */
     --bg-color: #a5e1ff;
     --card-bg: #ffffff;
     --text-primary: #1e293b;
@@ -13,43 +13,22 @@
     --status-warning: #f59e0b;
     --pill-bg-info: #f0f9ff;
     --pill-border-info: #bae6fd;
-    --badge-user-bg: #e0f2fe;
+    --table-header-bg: #f8fafc;
 }
 
-/* DETECCIÓN AUTOMÁTICA DEL MODO OSCURO DEL TELÉFONO */
-@media (prefers-color-scheme: dark) {
-    :root {
-        --bg-color: #0f172a;
-        --card-bg: #1e293b;
-        --text-primary: #f8fafc;
-        --text-secondary: #94a3b8;
-        --primary-blue: #0284c7;
-        --primary-hover: #0369a1;
-        --input-bg: #334155;
-        --border-color: #475569;
-        --pill-bg-info: #0369a120;
-        --pill-border-info: #0284c7;
-        --badge-user-bg: #0369a130;
-    }
-
-    /* Ajuste para tablas e insumos en la vista admin/registros en modo oscuro */
-    .custom-table th {
-        background: #0f172a !important;
-        color: var(--text-secondary) !important;
-    }
-
-    .filter-box {
-        background: #334155 !important;
-    }
-
-    .admin-tab {
-        background: #334155 !important;
-        color: var(--text-secondary) !important;
-    }
-    .admin-tab.active {
-        background: var(--primary-blue) !important;
-        color: #ffffff !important;
-    }
+/* MODO OSCURO (Activado manualmente o por preferencia del sistema) */
+body.dark-mode {
+    --bg-color: #0f172a;
+    --card-bg: #1e293b;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --primary-blue: #0284c7;
+    --primary-hover: #0369a1;
+    --input-bg: #334155;
+    --border-color: #475569;
+    --pill-bg-info: #0369a120;
+    --pill-border-info: #0284c7;
+    --table-header-bg: #0f172a;
 }
 
 * {
@@ -72,13 +51,34 @@ body {
 .app-wrapper {
     width: 100%;
     max-width: 420px;
+    position: relative;
+}
+
+/* BOTÓN FLOTANTE MODO OSCURO */
+.theme-toggle-btn {
+    position: absolute;
+    top: -15px;
+    right: 0;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    font-size: 1.1rem;
+    z-index: 10;
 }
 
 .card {
     background: var(--card-bg);
     border-radius: 28px;
     padding: 36px 28px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
 }
 
 .brand-box {
@@ -207,7 +207,7 @@ body {
 
 .btn-danger-link {
     width: 100%;
-    background: #fef2f215;
+    background: #fef2f220;
     border: 1px solid #fee2e240;
     color: var(--status-error);
     padding: 12px;
