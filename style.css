@@ -1,5 +1,5 @@
 :root {
-    /* MODO CLARO (Predeterminado) */
+    /* MODO CLARO */
     --bg-color: #a5e1ff;
     --card-bg: #ffffff;
     --text-primary: #1e293b;
@@ -16,8 +16,8 @@
     --table-header-bg: #f8fafc;
 }
 
-/* MODO OSCURO (Activado manualmente o por preferencia del sistema) */
-body.dark-mode {
+[data-theme="dark"] {
+    /* MODO OSCURO */
     --bg-color: #0f172a;
     --card-bg: #1e293b;
     --text-primary: #f8fafc;
@@ -51,39 +51,41 @@ body {
 .app-wrapper {
     width: 100%;
     max-width: 420px;
-    position: relative;
-}
-
-/* BOTÓN FLOTANTE MODO OSCURO */
-.theme-toggle-btn {
-    position: absolute;
-    top: -15px;
-    right: 0;
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    color: var(--text-primary);
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    font-size: 1.1rem;
-    z-index: 10;
 }
 
 .card {
     background: var(--card-bg);
     border-radius: 28px;
-    padding: 36px 28px;
+    padding: 32px 28px;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    position: relative;
+}
+
+/* BOTÓN DE CAMBIO DE TEMA DENTRO DE LA CARD */
+.theme-switch-container {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+}
+
+.theme-toggle-btn {
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 6px 12px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 700;
 }
 
 .brand-box {
     text-align: center;
     margin-bottom: 24px;
+    margin-top: 10px;
 }
 
 .logo-diamond {
@@ -118,7 +120,7 @@ body {
     margin-top: 4px;
 }
 
-/* NAVEGACIÓN TAB */
+/* TAB NAVEGACIÓN */
 .nav-tabs {
     display: flex;
     background: var(--input-bg);
