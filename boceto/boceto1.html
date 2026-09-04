@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boceto 1 - Clean Glass</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --border: #e5e7eb;
+            --accent: #2563eb;
+            --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0f172a;
+                --card-bg: #1e293b;
+                --text-main: #f8fafc;
+                --text-muted: #94a3b8;
+                --border: #334155;
+                --accent: #38bdf8;
+                --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            }
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 400px;
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border);
+        }
+
+        .header { text-align: center; margin-bottom: 24px; }
+        .avatar { width: 60px; height: 60px; background: var(--accent); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin: 0 auto 10px; font-size: 1.2rem; }
+        
+        .status-pill {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .input-group { margin-bottom: 16px; }
+        .input-group label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; }
+        .input-group select, .input-group input {
+            width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); color: var(--text-main); box-sizing: border-box; outline: none;
+        }
+
+        .btn-action {
+            width: 100%; padding: 14px; background: var(--accent); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <div class="avatar">RG</div>
+            <h2 style="margin:0;">RGPracticas</h2>
+            <p style="margin:4px 0 0; color:var(--text-muted); font-size:0.85rem;">Panel del Practicante</p>
+        </div>
+        
+        <div class="status-pill">📍 En rango permitido (12 m)</div>
+
+        <div class="input-group">
+            <label>Tipo de Registro</label>
+            <select>
+                <option>Hora de entrada</option>
+                <option>Hora de salida a almuerzo</option>
+            </select>
+        </div>
+
+        <button class="btn-action">Registrar Marcación</button>
+    </div>
+</body>
+</html>

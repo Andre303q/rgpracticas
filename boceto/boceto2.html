@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boceto 2 - Minimalist</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #ffffff;
+            --text-main: #090d16;
+            --text-muted: #64748b;
+            --field-bg: #f8fafc;
+            --border-color: #e2e8f0;
+            --accent-btn: #0f172a;
+            --btn-text: #ffffff;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #000000;
+                --text-main: #ffffff;
+                --text-muted: #a1a1aa;
+                --field-bg: #18181b;
+                --border-color: #27272a;
+                --accent-btn: #ffffff;
+                --btn-text: #000000;
+            }
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            padding: 24px 16px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .wrapper { width: 100%; max-width: 380px; }
+        
+        .badge-status {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #10b981;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        h1 { font-size: 1.75rem; margin: 0 0 24px 0; letter-spacing: -0.02em; }
+
+        .card-field {
+            background: var(--field-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        label { display: block; font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 8px; }
+        
+        select {
+            width: 100%;
+            border: none;
+            background: transparent;
+            color: var(--text-main);
+            font-size: 1rem;
+            font-weight: 600;
+            outline: none;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 18px;
+            background: var(--accent-btn);
+            color: var(--btn-text);
+            border: none;
+            border-radius: 16px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <span class="badge-status">● Ubicación Detectada</span>
+        <h1>Control de Asistencia</h1>
+
+        <div class="card-field">
+            <label>Acción a Registrar</label>
+            <select>
+                <option>Hora de entrada</option>
+                <option>Hora de salida</option>
+            </select>
+        </div>
+
+        <button class="btn-submit">Marcar Asistencia</button>
+    </div>
+</body>
+</html>
