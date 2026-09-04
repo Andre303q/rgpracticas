@@ -6,15 +6,6 @@
     <title>RGPracticas - Portal de Asistencia</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <style>
-        /* Definición de colores fijos seguros para los elementos del historial según el tema */
-        :root {
-            --historial-item-bg: #f8f9fa;
-        }
-        [data-theme="dark"] {
-            --historial-item-bg: #1e293b; /* Fondo gris oscuro fijo y elegante para modo oscuro */
-        }
-    </style>
 </head>
 <body>
 
@@ -376,7 +367,7 @@
         }
     });
 
-    // LÓGICA PARA MOSTRAR / OCULTAR Y CARGAR EL HISTORIAL DEL PRACTICANTE CON FONDO FIJO
+    // LÓGICA PARA MOSTRAR / OCULTAR Y CARGAR EL HISTORIAL DEL PRACTICANTE CON TARJETAS DE FONDO SÓLIDO
     document.getElementById("btnToggleHistorial").addEventListener("click", async () => {
         const boxHistorial = document.getElementById("boxHistorial");
         const listaHistorial = document.getElementById("listaHistorial");
@@ -414,15 +405,15 @@
                         textoEstado = "Justificación en Revisión ⏳";
                     }
 
-                    // Se aplica la variable var(--historial-item-bg) para garantizar visibilidad perfecta en modo oscuro
+                    // Se usa un fondo adaptativo basado en las variables de tu style.css para que luzca bien en modo claro y oscuro
                     html += `
-                        <div style="background: var(--historial-item-bg); padding: 10px 12px; border-radius: 8px; border-left: 3px solid ${badgeColor}; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                        <div style="background: var(--bg-input, rgba(255, 255, 255, 0.05)); padding: 12px; border-radius: 10px; border-left: 4px solid ${badgeColor}; border: 1px solid var(--border-color); margin-bottom: 8px;">
                             <div style="display: flex; justify-content: space-between; font-weight: 700;">
-                                <span>${r.tipo}</span>
+                                <span style="color: var(--text-color);">${r.tipo}</span>
                                 <span style="font-size: 0.7rem; color: ${badgeColor};">${textoEstado}</span>
                             </div>
                             <div style="color: var(--text-muted); font-size: 0.75rem; margin-top: 2px;">${r.fechaHora}</div>
-                            ${r.justificacion ? `<div style="font-size: 0.75rem; margin-top: 4px; font-style: italic;">Motivo: "${r.justificacion}"</div>` : ''}
+                            ${r.justificacion ? `<div style="font-size: 0.75rem; margin-top: 4px; font-style: italic; color: var(--text-color);">Motivo: "${r.justificacion}"</div>` : ''}
                         </div>
                     `;
                 });
