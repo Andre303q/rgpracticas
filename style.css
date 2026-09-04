@@ -61,7 +61,7 @@ body {
     position: relative;
 }
 
-/* BOTÓN DE CAMBIO DE TEMA DENTRO DE LA CARD */
+/* BOTÓN SWITCH DE TEMA */
 .theme-switch-container {
     position: absolute;
     top: 20px;
@@ -120,7 +120,7 @@ body {
     margin-top: 4px;
 }
 
-/* TAB NAVEGACIÓN */
+/* NAVEGACIÓN TAB */
 .nav-tabs {
     display: flex;
     background: var(--input-bg);
