@@ -367,12 +367,11 @@
         }
     });
 
-    // LÓGICA PARA MOSTRAR / OCULTAR Y CARGAR EL HISTORIAL DEL PRACTICANTE
+    // LÓGICA CORREGIDA PARA MOSTRAR HISTORIAL Y ESTADOS DE JUSTIFICACIÓN
     document.getElementById("btnToggleHistorial").addEventListener("click", async () => {
         const boxHistorial = document.getElementById("boxHistorial");
         const listaHistorial = document.getElementById("listaHistorial");
 
-        // Alternar visibilidad
         boxHistorial.classList.toggle("hidden");
 
         if (!boxHistorial.classList.contains("hidden")) {
@@ -390,21 +389,21 @@
                 querySnapshot.forEach((docSnap) => {
                     const r = docSnap.data();
                     
-                    // Definir color o texto según el estado de la justificación/puntualidad
                     let badgeColor = "var(--status-ok)";
                     let textoEstado = r.estadoPuntualidad;
 
-                    if (r.estadoPuntualidad === "Impuntual" || r.estadoPuntualidad === "Descuidado") {
-                        badgeColor = "var(--status-warning)";
-                    } else if (r.estadoJustificacion === "Aceptado") {
+                    // Validar primero el estado de la justificación para reflejar Aceptado, Rechazado o Pendiente correctamente
+                    if (r.estadoJustificacion === "Aceptado") {
                         badgeColor = "var(--status-ok)";
                         textoEstado = "Justificación Aceptada ✓";
                     } else if (r.estadoJustificacion === "Rechazado") {
-                        badgeColor = "var(--status-bad, #e74c3c)";
+                        badgeColor = "#e74c3c"; // Color rojo
                         textoEstado = "Justificación Rechazada ✕";
                     } else if (r.estadoJustificacion === "Pendiente") {
                         badgeColor = "var(--status-warning)";
                         textoEstado = "Justificación en Revisión ⏳";
+                    } else if (r.estadoPuntualidad === "Impuntual" || r.estadoPuntualidad === "Descuidado") {
+                        badgeColor = "var(--status-warning)";
                     }
 
                     html += `
