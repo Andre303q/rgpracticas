@@ -85,7 +85,7 @@
 
                 <div id="alertMarcacion" class="alert-msg hidden"></div>
 
-                <!-- BLOQUE DE JUSTIFICACIÓN CON DISEÑO MEJORADO DE ARCHIVOS -->
+                <!-- BLOQUE DE JUSTIFICACIÓN -->
                 <div id="boxJustificar" class="hidden" style="margin-top: 18px; border-top: 1px dashed var(--border-color); padding-top: 16px;">
                     <label style="font-size: 0.75rem; font-weight: 800; color: var(--status-warning); display: block; margin-bottom: 6px;">⚠️ JUSTIFICAR IMPUNTUALIDAD / SALIDA</label>
                     
@@ -96,18 +96,17 @@
                         </div>
                     </div>
 
-                    <!-- NUEVO SELECTOR DE ARCHIVOS ESTILIZADO -->
                     <div class="input-block" style="margin-top: 12px;">
                         <label style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 6px;">📎 COMPROBANTE O DOCUMENTO (MÁX. 50 MB):</label>
                         
-                        <label for="archivoComprobante" style="display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--input-bg); border: 2px dashed var(--border-color); padding: 12px; border-radius: 10px; cursor: pointer; transition: all 0.3s ease; text-align: center;">
+                        <label for="archivoComprobante" style="display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--input-bg); border: 2px dashed var(--border-color); padding: 12px; border-radius: 10px; cursor: pointer; text-align: center;">
                             <span style="font-size: 1.2rem;">📂</span>
                             <span id="nombreArchivoLabel" style="font-size: 0.8rem; color: var(--text-primary); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Toca aquí para adjuntar archivo</span>
                         </label>
-                        <input type="file" id="archivoComprobante" accept="image/*,.pdf,.doc,.docx" style="display: none;">
+                        <input type="file" id="archivoComprobante" style="display: none;">
                     </div>
 
-                    <button class="btn-primary" id="btnEnviarJustificacion" type="button" style="background: var(--status-warning); box-shadow: none; margin-top: 12px;">Enviar Motivo</button>
+                    <button class="btn-primary" id="btnEnviarJustificacion" type="button" style="background: var(--status-warning); box-shadow: none; margin-top: 12px;">Subir archivo...</button>
                 </div>
 
                 <button class="btn-danger-link" id="btnCerrarSesion" type="button">Cerrar Sesión</button>
@@ -135,13 +134,10 @@
 
     const temaGuardado = localStorage.getItem("tema_app");
     const prefiereOscuro = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const temaInicial = temaGuardado || (prefiereOscuro ? "dark" : "light");
-
-    aplicarTema(temaInicial);
+    aplicarTema(temaGuardado || (prefiereOscuro ? "dark" : "light"));
 
     btnToggle.addEventListener("click", () => {
-        const temaActual = document.documentElement.getAttribute("data-theme");
-        const nuevoTema = temaActual === "dark" ? "light" : "dark";
+        const nuevoTema = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
         aplicarTema(nuevoTema);
         localStorage.setItem("tema_app", nuevoTema);
     });
@@ -151,7 +147,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, collection, serverTimestamp, query, where, getDocs } 
         from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-    import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } 
+    import { getStorage, ref, uploadBytes, getDownloadURL } 
         from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
     const firebaseConfig = {
@@ -179,19 +175,10 @@
     let geoWatchId = null;
     let ultimoRegistroId = null;
 
-    // Mostrar el nombre del archivo seleccionado de forma bonita
     document.getElementById("archivoComprobante").addEventListener("change", function(e) {
         const label = document.getElementById("nombreArchivoLabel");
         if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
-            // Validar límite de 50 MB
-            if (file.size > 50 * 1024 * 1024) {
-                alert("El archivo es demasiado pesado. El límite máximo es de 50 MB.");
-                e.target.value = "";
-                label.textContent = "Toca aquí para adjuntar archivo";
-                return;
-            }
-            label.textContent = file.name;
+            label.textContent = e.target.files[0].name;
         } else {
             label.textContent = "Toca aquí para adjuntar archivo";
         }
@@ -311,17 +298,10 @@
         const fechaHoy = ahora.toLocaleDateString("es-PE");
 
         let estado = "Puntual", obs = "";
-
-        if (tipo === "Hora de entrada") {
-            if (minActuales < 480) { estado = "Temprano"; obs = "Llegada anticipada."; }
-            else if (minActuales > 480) { estado = "Impuntual"; obs = `Tardanza de ${minActuales - 480} min.`; }
-        } else if (tipo === "Hora de salida a almuerzo") {
-            if (minActuales < 690) { estado = "Descuidado"; obs = "Salida anticipada."; }
-        } else if (tipo === "Hora de regreso de almuerzo") {
-            if (minActuales > 750) { estado = "Impuntual"; obs = "Exceso tiempo almuerzo."; }
-        } else if (tipo === "Hora de salida") {
-            if (minActuales < 1020) { estado = "Descuidado"; obs = "Salida anticipada."; }
-        }
+        if (tipo === "Hora de entrada" && minActuales > 480) { estado = "Impuntual"; obs = `Tardanza de ${minActuales - 480} min.`; }
+        else if (tipo === "Hora de salida a almuerzo" && minActuales < 690) { estado = "Descuidado"; obs = "Salida anticipada."; }
+        else if (tipo === "Hora de regreso de almuerzo" && minActuales > 750) { estado = "Impuntual"; obs = "Exceso tiempo almuerzo."; }
+        else if (tipo === "Hora de salida" && minActuales < 1020) { estado = "Descuidado"; obs = "Salida anticipada."; }
 
         return { estado, observaciones: obs, minutosHora: minActuales, fechaHoy };
     }
@@ -336,16 +316,6 @@
 
         try {
             const fechaActual = new Date();
-            const fechaHoyFormat = fechaActual.toLocaleDateString("es-PE");
-
-            const qLimite = query(collection(db, "registros"), where("usuario", "==", usuarioActual.usuario), where("fechaHoy", "==", fechaHoyFormat));
-            const snapshotLimite = await getDocs(qLimite);
-
-            if (snapshotLimite.size >= 5) {
-                mostrarAlerta(alertMarcacion, "⚠️ Límite de 5 marcaciones diarias alcanzado.", "error");
-                return;
-            }
-
             const evaluacion = evaluarHorario(tipo);
 
             const docRef = await addDoc(collection(db, "registros"), {
@@ -371,7 +341,6 @@
             } else {
                 document.getElementById("boxJustificar").classList.add("hidden");
             }
-
         } catch (err) {
             mostrarAlerta(alertMarcacion, "Error: " + err.message, "error");
         } finally {
@@ -395,11 +364,10 @@
             btnEnviar.textContent = "Subiendo archivo...";
             let archivoUrl = "";
 
-            // Subida correcta a Firebase Storage (Soporta hasta más de 50 MB sin saturar Firestore)
             if (archivoInput.files && archivoInput.files[0]) {
                 const archivo = archivoInput.files[0];
-                const rutaStorage = storageRef(storage, `comprobantes/${usuarioActual.usuario}_${Date.now()}_${archivo.name}`);
-                const snapshot = await uploadBytes(rutaStorage, archivo);
+                const storageRef = ref(storage, `comprobantes/${Date.now()}_${archivo.name}`);
+                const snapshot = await uploadBytes(storageRef, archivo);
                 archivoUrl = await getDownloadURL(snapshot.ref);
             }
 
@@ -410,16 +378,16 @@
                 estadoJustificacion: "Pendiente"
             });
 
-            mostrarAlerta(alertMarcacion, "Justificación y comprobante enviados con éxito.", "success");
+            mostrarAlerta(alertMarcacion, "Justificación y archivo subidos con éxito.", "success");
             document.getElementById("boxJustificar").classList.add("hidden");
             document.getElementById("txtJustificacion").value = "";
             document.getElementById("archivoComprobante").value = "";
             document.getElementById("nombreArchivoLabel").textContent = "Toca aquí para adjuntar archivo";
         } catch (e) {
-            mostrarAlerta(alertMarcacion, "Error al enviar: " + e.message, "error");
+            mostrarAlerta(alertMarcacion, "Error al subir: " + e.message, "error");
         } finally {
             btnEnviar.disabled = false;
-            btnEnviar.textContent = "Enviar Motivo";
+            btnEnviar.textContent = "Subir archivo...";
         }
     });
 
