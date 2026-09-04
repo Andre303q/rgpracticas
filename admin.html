@@ -118,7 +118,6 @@
             background: var(--accent);
             border: none;
             color: #fff;
-            padding: 99px 18px;
             padding: 9px 18px;
             border-radius: 8px;
             font-weight: 600;
@@ -171,6 +170,8 @@
         .badge-temprano { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
         .badge-impuntual { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
         .badge-descuidado { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .badge-justificado { background: rgba(16, 185, 129, 0.25); color: #34d399; border: 1px solid #34d399; }
+        .badge-rechazado { background: rgba(239, 68, 68, 0.25); color: #f87171; border: 1px solid #f87171; }
 
         .btn-action {
             background: rgba(255, 255, 255, 0.05);
@@ -285,7 +286,6 @@
     import { getFirestore, collection, getDocs, updateDoc, doc, query, orderBy } 
         from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    // Configuración alineada directamente con index.html
     const firebaseConfig = {
         apiKey: "AIzaSyB6KT4Gw-O4NDhsAREAeAdAmrIuMH53ZyQ",
         authDomain: "rgpracticantes-da4bc.firebaseapp.com",
@@ -334,6 +334,8 @@
             if (reg.estadoPuntualidad === "Impuntual") badgeClass = "badge-impuntual";
             if (reg.estadoPuntualidad === "Temprano") badgeClass = "badge-temprano";
             if (reg.estadoPuntualidad === "Descuidado") badgeClass = "badge-descuidado";
+            if (reg.estadoPuntualidad === "Justificado") badgeClass = "badge-justificado";
+            if (reg.estadoPuntualidad === "Rechazado") badgeClass = "badge-rechazado";
 
             let justHtml = "-";
             if (reg.justificacion) {
@@ -404,7 +406,15 @@
     async function actualizarEstadoJustificacion(id, nuevoEstado) {
         try {
             const regRef = doc(db, "registros", id);
-            await updateDoc(regRef, { estadoJustificacion: nuevoEstado });
+            
+            // Si es Aprobada cambia la puntualidad a "Justificado", si es Rechazada a "Rechazado"
+            const nuevoEstadoPuntualidad = nuevoEstado === "Aprobada" ? "Justificado" : "Rechazado";
+
+            await updateDoc(regRef, { 
+                estadoJustificacion: nuevoEstado,
+                estadoPuntualidad: nuevoEstadoPuntualidad
+            });
+
             await cargarRegistros();
         } catch (e) {
             alert("Error al actualizar: " + e.message);
