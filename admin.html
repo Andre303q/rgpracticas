@@ -213,43 +213,63 @@
             <button class="nav-tab-btn" id="tabUsuarios" type="button">Usuarios Registrados</button>
         </div>
 
-        <!-- BARRA DE FILTROS Y EXPORTACIÓN -->
-        <div class="filtros-bar">
-            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 700;">FILTRAR USUARIO:</span>
-                <input type="text" id="txtFiltroUsuario" class="input-filtro" placeholder="Buscar por nombre o usuario...">
-            </div>
-            
-            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 700;">FECHA:</span>
-                <input type="date" id="txtFiltroFecha" class="input-filtro">
-                <button class="input-filtro" id="btnTodosFecha" style="cursor: pointer; background: #0284c7; border: none; color: white; font-weight: 600;">Todos</button>
+        <!-- SECCIÓN DE MARCACIONES -->
+        <div id="seccionMarcaciones">
+            <div class="filtros-bar">
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                    <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 700;">FILTRAR USUARIO:</span>
+                    <input type="text" id="txtFiltroUsuario" class="input-filtro" placeholder="Buscar por nombre o usuario...">
+                </div>
                 
-                <!-- BOTONES EXCEL Y PDF -->
-                <button class="btn-export-excel" id="btnExportExcel" type="button">📊 Excel</button>
-                <button class="btn-export-pdf" id="btnExportPDF" type="button">📄 PDF</button>
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                    <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 700;">FECHA:</span>
+                    <input type="date" id="txtFiltroFecha" class="input-filtro">
+                    <button class="input-filtro" id="btnTodosFecha" style="cursor: pointer; background: #0284c7; border: none; color: white; font-weight: 600;">Todos</button>
+                    
+                    <button class="btn-export-excel" id="btnExportExcel" type="button">📊 Excel</button>
+                    <button class="btn-export-pdf" id="btnExportPDF" type="button">📄 PDF</button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Practicante</th>
+                            <th>Tipo Marcación</th>
+                            <th>Fecha y Hora</th>
+                            <th>Distancia</th>
+                            <th>Puntualidad</th>
+                            <th>Observaciones / Justificación</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaRegistrosBody">
+                        <tr><td colspan="7" style="text-align: center; color: var(--text-secondary);">Cargando registros...</td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
 
-        <!-- TABLA DE ASISTENCIAS -->
-        <div class="table-responsive">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Practicante</th>
-                        <th>Tipo Marcación</th>
-                        <th>Fecha y Hora</th>
-                        <th>Distancia</th>
-                        <th>Puntualidad</th>
-                        <th>Observaciones / Justificación</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="tablaRegistrosBody">
-                    <tr><td colspan="7" style="text-align: center; color: var(--text-secondary);">Cargando registros...</td></tr>
-                </tbody>
-            </table>
+        <!-- SECCIÓN DE USUARIOS REGISTRADOS (OCULTA POR DEFECTO) -->
+        <div id="seccionUsuarios" class="hidden">
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nombre Completo</th>
+                            <th>Usuario (Login)</th>
+                            <th>Rol</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaUsuariosBody">
+                        <tr><td colspan="4" style="text-align: center; color: var(--text-secondary);">Cargando usuarios...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
+
     </div>
 
     <!-- MODAL DE DETALLE -->
@@ -309,7 +329,9 @@
     const db = getFirestore(initializeApp(firebaseConfig));
     let listaRegistrosGlobal = [];
     let registrosFiltradosActuales = [];
+    let listaUsuariosGlobal = [];
 
+    // Cargar Registros de Asistencia
     async function cargarRegistros() {
         const tbody = document.getElementById("tablaRegistrosBody");
         try {
@@ -325,6 +347,44 @@
         } catch (e) {
             tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #ef4444;">Error al cargar: ${e.message}</td></tr>`;
         }
+    }
+
+    // Cargar Usuarios Registrados desde Firestore
+    async function cargarUsuarios() {
+        const tbody = document.getElementById("tablaUsuariosBody");
+        try {
+            const snapshot = await getDocs(collection(db, "usuarios"));
+            listaUsuariosGlobal = [];
+            snapshot.forEach(d => {
+                listaUsuariosGlobal.push({ id: d.id, ...d.data() });
+            });
+
+            renderizarTablaUsuarios(listaUsuariosGlobal);
+        } catch (e) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #ef4444;">Error al cargar usuarios: ${e.message}</td></tr>`;
+        }
+    }
+
+    function renderizarTablaUsuarios(usuarios) {
+        const tbody = document.getElementById("tablaUsuariosBody");
+        if (usuarios.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-secondary);">No hay usuarios registrados.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = "";
+        usuarios.forEach(u => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td><strong>${u.nombre || 'Sin nombre'}</strong></td>
+                <td>${u.usuario || u.id}</td>
+                <td><span class="badge" style="background: rgba(59, 130, 246, 0.2); color: #3b82f6;">${u.rol || 'practicante'}</span></td>
+                <td>
+                    <button class="btn-icon" onclick="eliminarUsuario('${u.id}')" title="Eliminar Usuario">🗑️</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
     }
 
     function renderizarTabla(registros) {
@@ -403,7 +463,7 @@
     };
 
     window.eliminarRegistro = async function(id) {
-        if (confirm("¿Estás seguro de eliminar este registro?")) {
+        if (confirm("¿Estás seguro de eliminar este registro de asistencia?")) {
             try {
                 await deleteDoc(doc(db, "registros", id));
                 cargarRegistros();
@@ -413,7 +473,18 @@
         }
     };
 
-    // EXPORTAR A EXCEL (Respeta los filtros activos)
+    window.eliminarUsuario = async function(id) {
+        if (confirm("¿Estás seguro de eliminar este usuario del sistema?")) {
+            try {
+                await deleteDoc(doc(db, "usuarios", id));
+                cargarUsuarios();
+            } catch (e) {
+                alert("Error al eliminar usuario: " + e.message);
+            }
+        }
+    };
+
+    // EXPORTAR A EXCEL
     document.getElementById("btnExportExcel").addEventListener("click", () => {
         if (registrosFiltradosActuales.length === 0) {
             alert("No hay datos para exportar.");
@@ -436,7 +507,7 @@
         XLSX.writeFile(workbook, "Reporte_Asistencias_RGPracticas.xlsx");
     });
 
-    // EXPORTAR A PDF (Respeta los filtros activos)
+    // EXPORTAR A PDF
     document.getElementById("btnExportPDF").addEventListener("click", () => {
         if (registrosFiltradosActuales.length === 0) {
             alert("No hay datos para exportar.");
@@ -489,14 +560,25 @@
         window.location.href = "index.html";
     });
 
-    document.getElementById("tabMarcaciones").addEventListener("click", () => {
-        document.getElementById("tabMarcaciones").classList.add("active");
-        document.getElementById("tabUsuarios").classList.remove("active");
+    // CONTROL DE PESTAÑAS (Marcaciones / Usuarios Registrados)
+    const tabMarcaciones = document.getElementById("tabMarcaciones");
+    const tabUsuarios = document.getElementById("tabUsuarios");
+    const seccionMarcaciones = document.getElementById("seccionMarcaciones");
+    const seccionUsuarios = document.getElementById("seccionUsuarios");
+
+    tabMarcaciones.addEventListener("click", () => {
+        tabMarcaciones.classList.add("active");
+        tabUsuarios.classList.remove("active");
+        seccionMarcaciones.classList.remove("hidden");
+        seccionUsuarios.classList.add("hidden");
     });
-    document.getElementById("tabUsuarios").addEventListener("click", () => {
-        document.getElementById("tabUsuarios").classList.add("active");
-        document.getElementById("tabMarcaciones").classList.remove("active");
-        alert("Apartado de Usuarios Registrados en desarrollo.");
+
+    tabUsuarios.addEventListener("click", () => {
+        tabUsuarios.classList.add("active");
+        tabMarcaciones.classList.remove("active");
+        seccionUsuarios.classList.remove("hidden");
+        seccionMarcaciones.classList.add("hidden");
+        cargarUsuarios(); // Carga dinámicamente los usuarios desde Firebase
     });
 
     cargarRegistros();
