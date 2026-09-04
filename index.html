@@ -3,176 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RGPracticas - Panel de Practicante</title>
+    <title>RGPracticas - Iniciar Sesión</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    
     <style>
-        /* Estilos para la campanita de notificaciones */
-        .notification-container {
-            position: relative;
-            display: inline-block;
-        }
-        .bell-btn {
-            background: var(--input-bg, #111827);
-            border: 1px solid var(--border-color, #2d3748);
-            color: var(--text-primary, #fff);
-            padding: 8px 12px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 1rem;
-            position: relative;
+        body {
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 40px;
-            height: 40px;
-            transition: background 0.2s;
+            min-height: 100vh;
+            margin: 0;
+            background-color: var(--bg-color, #0f172a);
+            font-family: 'Plus Jakarta Sans', sans-serif;
         }
-        .bell-btn:hover {
-            background: rgba(2, 132, 199, 0.2);
-        }
-        .notification-badge {
-            position: absolute;
-            top: -2px;
-            right: -2px;
-            background: #ef4444;
-            color: white;
-            font-size: 0.65rem;
-            font-weight: 700;
-            padding: 2px 6px;
-            border-radius: 10px;
-            border: 2px solid var(--card-bg, #1a1f2c);
-        }
-        .notification-dropdown {
-            position: absolute;
-            right: 0;
-            top: 50px;
-            width: 320px;
-            max-height: 400px;
-            overflow-y: auto;
+        .login-card {
+            max-width: 400px;
+            width: 100%;
             background: var(--card-bg, #1a1f2c);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
             border: 1px solid var(--border-color, #2d3748);
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
-            z-index: 1000;
-            padding: 12px;
             box-sizing: border-box;
         }
-        .notification-item {
-            padding: 10px;
-            border-bottom: 1px solid var(--border-color, #2d3748);
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
             font-size: 0.8rem;
-        }
-        .notification-item:last-child {
-            border-bottom: none;
-        }
-        .status-pill {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 0.7rem;
             font-weight: 700;
-            margin-top: 4px;
+            color: var(--text-secondary, #a0aec0);
+            margin-bottom: 8px;
+            text-transform: uppercase;
         }
-        .status-revision { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
-        .status-aprobado { background: rgba(16, 185, 129, 0.2); color: #10b981; }
-        .status-rechazado { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
-        .hidden { display: none !important; }
+        input {
+            width: 100%;
+            background: var(--input-bg, #111827);
+            border: 1px solid var(--border-color, #2d3748);
+            color: var(--text-primary, #fff);
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            outline: none;
+            box-sizing: border-box;
+        }
+        input:focus {
+            border-color: #0284c7;
+        }
+        .btn-submit {
+            width: 100%;
+            background: #0284c7;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-submit:hover {
+            background: #0369a1;
+        }
+        .error-msg {
+            color: #ef4444;
+            font-size: 0.82rem;
+            text-align: center;
+            margin-top: 15px;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
 
-    <div class="admin-container" style="max-width: 800px;">
-        <!-- HEADER CON CAMPANITA -->
-        <div class="admin-header" style="align-items: center;">
-            <div>
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
-                    <div class="logo-diamond" style="width: 30px; height: 30px; font-size: 0.75rem;"><span>RG</span></div>
-                    <h1 id="lblBienvenida" style="font-size: 1.3rem; margin: 0; color: var(--text-primary);">Panel del Practicante</h1>
-                </div>
-                <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 0;">Gestiona tus marcaciones y revisa tus estatus</p>
-            </div>
-            
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <!-- CAMPANITA DE NOTIFICACIONES -->
-                <div class="notification-container">
-                    <button class="bell-btn" id="btnCampana" type="button" title="Notificaciones de Justificaciones">
-                        🔔
-                        <span id="notifBadge" class="notification-badge hidden">0</span>
-                    </button>
-
-                    <!-- DESPLEGABLE DE NOTIFICACIONES -->
-                    <div id="dropdownNotificaciones" class="notification-dropdown hidden">
-                        <div style="font-weight: 700; font-size: 0.85rem; margin-bottom: 8px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
-                            <span>Mis Justificaciones</span>
-                            <span style="font-size: 0.7rem; color: var(--text-secondary);">Actualizado</span>
-                        </div>
-                        <div id="listaNotificaciones">
-                            <div style="text-align: center; color: var(--text-secondary); padding: 15px 0; font-size: 0.8rem;">Cargando notificaciones...</div>
-                        </div>
-                    </div>
-                </div>
-
-                <button class="theme-toggle-btn" id="btnThemeToggle" type="button" style="padding: 6px 12px; font-size: 0.8rem;">
-                    <span id="themeIcon">☀️</span>
-                </button>
-                <button id="btnCerrarSesion" class="btn-danger-link" style="width: auto; padding: 7px 12px; margin: 0; font-size: 0.78rem;">Salir</button>
-            </div>
+    <div class="login-card">
+        <div style="text-align: center; margin-bottom: 25px;">
+            <div class="logo-diamond" style="width: 48px; height: 48px; margin: 0 auto 12px; font-size: 1.1rem;"><span>RG</span></div>
+            <h1 style="font-size: 1.4rem; margin: 0; color: var(--text-primary);">RGPracticas</h1>
+            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px;">Ingresa a tu cuenta para continuar</p>
         </div>
 
-        <!-- RESTO DE TU CONTENIDO DE MARCACIONES / DASHBOARD -->
-        <div style="background: var(--input-bg, #111827); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color, #2d3748); text-align: center;">
-            <h3 style="margin-top: 0; color: var(--text-primary);">¡Bienvenido a tu panel!</h3>
-            <p style="font-size: 0.85rem; color: var(--text-secondary);">Aquí puedes realizar tus marcaciones diarias de entrada, salida y almuerzo. Haz clic en la campanita superior (🔔) en cualquier momento para ver si tus justificaciones han sido aprobadas o rechazadas.</p>
-        </div>
+        <form id="formLogin">
+            <div class="form-group">
+                <label for="txtUsuario">Usuario o Correo</label>
+                <input type="text" id="txtUsuario" required placeholder="Ingresa tu usuario...">
+            </div>
+
+            <div class="form-group">
+                <label for="txtPassword">Contraseña</label>
+                <input type="password" id="txtPassword" required placeholder="••••••••">
+            </div>
+
+            <button type="submit" class="btn-submit" id="btnLogin">Iniciar Sesión</button>
+            <div id="mensajeError" class="error-msg"></div>
+        </form>
     </div>
-
-<script>
-    // Control de tema claro/oscuro
-    const btnToggle = document.getElementById("btnThemeToggle");
-    const themeIcon = document.getElementById("themeIcon");
-
-    function aplicarTema(tema) {
-        if (tema === "dark") {
-            document.documentElement.setAttribute("data-theme", "dark");
-            themeIcon.textContent = "☀️";
-        } else {
-            document.documentElement.setAttribute("data-theme", "light");
-            themeIcon.textContent = "🌙";
-        }
-    }
-    const temaGuardado = localStorage.getItem("tema_app") || "dark";
-    aplicarTema(temaGuardado);
-
-    btnToggle.addEventListener("click", () => {
-        const actual = document.documentElement.getAttribute("data-theme");
-        const nuevo = actual === "dark" ? "light" : "dark";
-        aplicarTema(nuevo);
-        localStorage.setItem("tema_app", nuevo);
-    });
-
-    // Abrir / Cerrar el menú desplegable de la campanita
-    const btnCampana = document.getElementById("btnCampana");
-    const dropdownNotificaciones = document.getElementById("dropdownNotificaciones");
-
-    btnCampana.addEventListener("click", (e) => {
-        e.stopPropagation();
-        dropdownNotificaciones.classList.toggle("hidden");
-    });
-
-    document.addEventListener("click", () => {
-        dropdownNotificaciones.classList.add("hidden");
-    });
-
-    dropdownNotificaciones.addEventListener("click", (e) => {
-        e.stopPropagation();
-    });
-</script>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, query, where, orderBy } 
+    import { getFirestore, collection, getDocs, query, where } 
         from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -186,88 +116,60 @@
 
     const db = getFirestore(initializeApp(firebaseConfig));
 
-    // Obtener el usuario actual logueado (guardado en localStorage al iniciar sesión)
-    // Asegúrate de guardar el usuario al hacer login ej: localStorage.setItem("usuarioLogueado", username);
-    const usuarioActual = localStorage.getItem("usuarioLogueado") || localStorage.getItem("nombreUsuario") || "";
+    document.getElementById("formLogin").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const usuarioInput = document.getElementById("txtUsuario").value.trim();
+        const passwordInput = document.getElementById("txtPassword").value.trim();
+        const mensajeError = document.getElementById("mensajeError");
+        const btnLogin = document.getElementById("btnLogin");
 
-    async function cargarNotificacionesJustificaciones() {
-        const contenedorLista = document.getElementById("listaNotificaciones");
-        const notifBadge = document.getElementById("notifBadge");
-
-        if (!usuarioActual) {
-            contenedorLista.innerHTML = `<div style="text-align: center; color: var(--text-secondary); padding: 10px; font-size: 0.78rem;">No hay sesión activa identificada.</div>`;
-            return;
-        }
+        mensajeError.textContent = "";
+        btnLogin.textContent = "Verificando...";
+        btnLogin.disabled = true;
 
         try {
-            // Consultamos todos los registros del usuario que tengan justificación
-            const q = query(collection(db, "registros"), orderBy("creado", "desc"));
-            const snapshot = await getDocs(q);
+            // Buscamos el usuario en la colección "usuarios" de Firestore
+            const q = query(collection(db, "usuarios"), where("usuario", "==", usuarioInput));
+            const querySnapshot = await getDocs(q);
 
-            let misJustificaciones = [];
-            snapshot.forEach(d => {
-                const data = d.data();
-                // Filtramos por el usuario actual (coincidencia en usuario o nombre)
-                if (data.usuario === usuarioActual || data.nombre === usuarioActual) {
-                    if (data.justificacion && data.justificacion.trim() !== "") {
-                        misJustificaciones.push({ id: d.id, ...data });
-                    }
-                }
-            });
-
-            if (misJustificaciones.length === 0) {
-                contenedorLista.innerHTML = `<div style="text-align: center; color: var(--text-secondary); padding: 15px 0; font-size: 0.8rem;">No has enviado ninguna justificación.</div>`;
-                notifBadge.classList.add("hidden");
+            if (querySnapshot.empty) {
+                // Intento alternativo buscando por campo ID o nombre si es necesario
+                mensajeError.textContent = "Usuario o contraseña incorrectos.";
+                btnLogin.textContent = "Iniciar Sesión";
+                btnLogin.disabled = false;
                 return;
             }
 
-            contenedorLista.innerHTML = "";
-            let pendientesRevision = 0;
-
-            misJustificaciones.forEach(j => {
-                let estadoTexto = "En revisión";
-                let clasePill = "status-revision";
-
-                if (j.estadoPuntualidad === "Justificación Aprobada") {
-                    estadoTexto = "Aprobado";
-                    clasePill = "status-aprobado";
-                } else if (j.estadoPuntualidad === "Justificación Rechazada") {
-                    estadoTexto = "Rechazado";
-                    clasePill = "status-rechazado";
-                } else {
-                    pendientesRevision++;
-                }
-
-                const divItem = document.createElement("div");
-                divItem.className = "notification-item";
-                divItem.innerHTML = `
-                    <div style="font-weight: 600; color: var(--text-primary);">📅 ${j.tipo} (${j.fechaHora || 'N/D'})</div>
-                    <div style="color: var(--text-secondary); font-size: 0.75rem; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">"${j.justificacion}"</div>
-                    <div><span class="status-pill ${clasePill}">Estatus: ${estadoTexto}</span></div>
-                `;
-                contenedorLista.appendChild(divItem);
+            let usuarioEncontrado = null;
+            querySnapshot.forEach((doc) => {
+                usuarioEncontrado = doc.data();
             });
 
-            // Mostrar la cantidad de pendientes o notificaciones totales en el badge rojo
-            if (misJustificaciones.length > 0) {
-                notifBadge.textContent = misJustificaciones.length;
-                notifBadge.classList.remove("hidden");
+            if (usuarioEncontrado.password === passwordInput) {
+                // Guardamos sesión en localStorage
+                localStorage.setItem("usuarioLogueado", usuarioEncontrado.usuario || usuarioInput);
+                localStorage.setItem("rolUsuario", usuarioEncontrado.rol || "practicante");
+                localStorage.setItem("nombreUsuario", usuarioEncontrado.nombre || usuarioInput);
+
+                // Redirección según rol
+                if (usuarioEncontrado.rol === "admin") {
+                    window.location.href = "admin.html";
+                } else {
+                    window.location.href = "dashboard.html"; // O la vista de practicante correspondiente
+                }
             } else {
-                notifBadge.classList.add("hidden");
+                mensajeError.textContent = "Contraseña incorrecta.";
+                btnLogin.textContent = "Iniciar Sesión";
+                btnLogin.disabled = false;
             }
 
-        } catch (e) {
-            contenedorLista.innerHTML = `<div style="text-align: center; color: #ef4444; padding: 10px; font-size: 0.78rem;">Error al cargar notificaciones.</div>`;
+        } catch (error) {
+            mensajeError.textContent = "Error de conexión: " + error.message;
+            btnLogin.textContent = "Iniciar Sesión";
+            btnLogin.disabled = false;
         }
-    }
-
-    // Ejecutar al cargar la página
-    cargarNotificacionesJustificaciones();
-
-    document.getElementById("btnCerrarSesion").addEventListener("click", () => {
-        localStorage.removeItem("usuarioLogueado");
-        window.location.href = "index.html";
     });
 </script>
+
 </body>
 </html>
