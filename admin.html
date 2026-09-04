@@ -3,62 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Administrador - RGPracticas</title>
+    <title>Panel de Control Admin - RGPracticas</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
-        body { align-items: flex-start; padding: 20px; }
-        .admin-wrapper { width: 100%; max-width: 1100px; margin: 0 auto; }
+        .admin-viewport { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
         
-        .header-bar {
+        .toolbar {
             display: flex;
+            flex-wrap: wrap;
             justify-content: space-between;
             align-items: center;
-            background: var(--card-bg);
-            border: 1px solid var(--border-card);
-            padding: 16px 24px;
+            gap: 16px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 16px 20px;
             border-radius: 20px;
             margin-bottom: 20px;
-            box-shadow: var(--shadow-card);
+            box-shadow: var(--shadow);
         }
 
-        .table-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-card);
-            border-radius: 24px;
-            padding: 20px;
-            box-shadow: var(--shadow-card);
+        .filter-box { display: flex; align-items: center; gap: 10px; }
+        .filter-box input[type="date"] {
+            padding: 8px 12px;
+            background: var(--surface-secondary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-family: inherit;
+        }
+
+        .table-wrapper {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
             overflow-x: auto;
         }
 
         table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem; }
-        th { padding: 12px 14px; border-bottom: 1px solid var(--border-card); color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; }
-        td { padding: 14px; border-bottom: 1px solid var(--border-card); }
+        th { padding: 14px 16px; border-bottom: 1px solid var(--border); color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        td { padding: 14px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; }
 
-        .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
-        .badge-Puntual { background: rgba(16, 185, 129, 0.15); color: var(--status-success); }
-        .badge-Impuntual { background: rgba(239, 68, 68, 0.15); color: var(--status-error); }
-        .badge-Descuidado { background: rgba(217, 119, 6, 0.15); color: var(--status-warning); }
-        .badge-Justificado { background: rgba(16, 185, 129, 0.25); color: var(--status-success); border: 1px solid var(--status-success); }
-        .badge-Rechazado { background: rgba(239, 68, 68, 0.25); color: var(--status-error); border: 1px solid var(--status-error); }
+        .chip {
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: inline-block;
+        }
+        .chip-Puntual, .chip-Temprano { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+        .chip-Impuntual { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+        .chip-Descuidado { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
+        .chip-Justificado { background: rgba(16, 185, 129, 0.25); color: var(--success); border: 1px solid var(--success); }
+        .chip-Rechazado { background: rgba(239, 68, 68, 0.25); color: var(--danger); border: 1px solid var(--danger); }
 
-        .btn-sm { padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; border: none; cursor: pointer; }
-        .btn-ok { background: var(--status-success); color: white; }
-        .btn-no { background: var(--status-error); color: white; }
+        .action-btns { display: flex; gap: 6px; }
+        .btn-sm { padding: 6px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; border: none; cursor: pointer; }
+        .btn-ok { background: var(--success); color: #fff; }
+        .btn-no { background: var(--warning); color: #fff; }
+        .btn-del { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
+        .btn-del:hover { background: var(--danger); color: #fff; }
     </style>
 </head>
 <body>
 
-    <div class="admin-wrapper">
-        <div class="header-bar">
-            <div>
-                <h1 style="margin:0; font-size:1.3rem;">Panel Administrador</h1>
-                <p style="margin:0; font-size:0.8rem; color:var(--text-muted);">RGPracticas Control</p>
+    <div class="admin-viewport">
+        
+        <header class="toolbar">
+            <div class="brand-header" style="margin-bottom:0;">
+                <div class="brand-logo">RG</div>
+                <div class="brand-info">
+                    <h1>Administración</h1>
+                    <p>Monitoreo y Control de Practicantes</p>
+                </div>
             </div>
-            <button class="btn-primary btn-danger" id="btnLogout" style="margin:0; width:auto; padding:10px 18px;">Cerrar Sesión</button>
-        </div>
 
-        <div class="table-card">
+            <div class="filter-box">
+                <label style="font-size:0.8rem; font-weight:700; color:var(--text-muted);">FILTRAR POR FECHA:</label>
+                <input type="date" id="filtroFecha">
+                <button class="btn-sm btn-del" id="btnLimpiarFiltro" style="padding:8px 12px;">Ver Todos</button>
+            </div>
+
+            <button class="btn btn-danger-outline" id="btnLogout" style="width:auto; margin:0; padding:10px 16px;">Cerrar Sesión</button>
+        </header>
+
+        <main class="table-wrapper">
             <table>
                 <thead>
                     <tr>
@@ -68,19 +98,20 @@
                         <th>Distancia</th>
                         <th>Puntualidad</th>
                         <th>Justificación</th>
-                        <th>Acción</th>
+                        <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="tablaRegistros">
-                    <tr><td colspan="7" style="text-align:center;">Cargando...</td></tr>
+                    <tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">Cargando registros...</td></tr>
                 </tbody>
             </table>
-        </div>
+        </main>
+
     </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, updateDoc, doc, query, orderBy } 
+    import { getFirestore, collection, getDocs, updateDoc, deleteDoc, doc, query, orderBy } 
         from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -93,59 +124,112 @@
     };
 
     const db = getFirestore(initializeApp(firebaseConfig));
+    let listaRegistros = [];
 
     document.getElementById("btnLogout").addEventListener("click", () => window.location.href = "index.html");
 
-    async function cargar() {
+    async function cargarRegistros() {
         const tbody = document.getElementById("tablaRegistros");
         try {
             const q = query(collection(db, "registros"), orderBy("creado", "desc"));
             const snap = await getDocs(q);
-            tbody.innerHTML = "";
+            listaRegistros = [];
 
             snap.forEach((docSnap) => {
-                const reg = { id: docSnap.id, ...docSnap.data() };
-                const tr = document.createElement("tr");
-
-                let justHtml = "-";
-                if (reg.justificacion) {
-                    justHtml = `<i>"${reg.justificacion}"</i><br><small><b>Status: ${reg.estadoJustificacion || 'Pendiente'}</b></small>`;
-                }
-
-                let btnHtml = "";
-                if (reg.justificacion && reg.estadoJustificacion === "Pendiente") {
-                    btnHtml = `
-                        <button class="btn-sm btn-ok" onclick="responder('${reg.id}', 'Aprobada')">Aprobar</button>
-                        <button class="btn-sm btn-no" onclick="responder('${reg.id}', 'Rechazada')">Rechazar</button>
-                    `;
-                }
-
-                tr.innerHTML = `
-                    <td><b>${reg.nombre || reg.usuario}</b></td>
-                    <td>${reg.tipo}</td>
-                    <td>${reg.fechaHora}</td>
-                    <td>${reg.distanciaMetros}m</td>
-                    <td><span class="badge badge-${reg.estadoPuntualidad}">${reg.estadoPuntualidad}</span></td>
-                    <td>${justHtml}</td>
-                    <td>${btnHtml}</td>
-                `;
-                tbody.appendChild(tr);
+                listaRegistros.push({ id: docSnap.id, ...docSnap.data() });
             });
+
+            renderizarTabla(listaRegistros);
         } catch (e) {
-            tbody.innerHTML = `<tr><td colspan="7">Error: ${e.message}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--danger);">Error de carga: ${e.message}</td></tr>`;
         }
     }
 
-    window.responder = async function(id, estado) {
+    function renderizarTabla(registros) {
+        const tbody = document.getElementById("tablaRegistros");
+        tbody.innerHTML = "";
+
+        if (registros.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">No se encontraron registros.</td></tr>`;
+            return;
+        }
+
+        registros.forEach((reg) => {
+            const tr = document.createElement("tr");
+
+            let justHtml = "-";
+            if (reg.justificacion) {
+                justHtml = `<i>"${reg.justificacion}"</i><br><small style="color:var(--text-muted)">Estado: <b>${reg.estadoJustificacion || 'Pendiente'}</b></small>`;
+            }
+
+            let accionesHtml = `<div class="action-btns">`;
+            if (reg.justificacion && reg.estadoJustificacion === "Pendiente") {
+                accionesHtml += `
+                    <button class="btn-sm btn-ok" onclick="responderJustificacion('${reg.id}', 'Aprobada')">Aprobar</button>
+                    <button class="btn-sm btn-no" onclick="responderJustificacion('${reg.id}', 'Rechazada')">Rechazar</button>
+                `;
+            }
+            accionesHtml += `<button class="btn-sm btn-del" onclick="eliminarRegistro('${reg.id}')" title="Eliminar registro">🗑️</button></div>`;
+
+            tr.innerHTML = `
+                <td><b>${reg.nombre || reg.usuario}</b></td>
+                <td>${reg.tipo}</td>
+                <td>${reg.fechaHora}</td>
+                <td>${reg.distanciaMetros}m</td>
+                <td><span class="chip chip-${reg.estadoPuntualidad}">${reg.estadoPuntualidad}</span></td>
+                <td>${justHtml}</td>
+                <td>${accionesHtml}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // FILTRAR POR FECHA
+    document.getElementById("filtroFecha").addEventListener("change", (e) => {
+        const valorFecha = e.target.value; // Formato YYYY-MM-DD
+        if (!valorFecha) {
+            renderizarTabla(listaRegistros);
+            return;
+        }
+
+        const [year, month, day] = valorFecha.split("-");
+        const fechaBuscada = `${parseInt(day)}/${parseInt(month)}/${year}`;
+
+        const filtrados = listaRegistros.filter(reg => {
+            return reg.fechaHoy === fechaBuscada || (reg.fechaHora && reg.fechaHora.includes(fechaBuscada));
+        });
+
+        renderizarTabla(filtrados);
+    });
+
+    document.getElementById("btnLimpiarFiltro").addEventListener("click", () => {
+        document.getElementById("filtroFecha").value = "";
+        renderizarTabla(listaRegistros);
+    });
+
+    // RESPONDER JUSTIFICACIÓN
+    window.responderJustificacion = async function(id, estado) {
         const estadoPunt = estado === "Aprobada" ? "Justificado" : "Rechazado";
         await updateDoc(doc(db, "registros", id), {
             estadoJustificacion: estado,
             estadoPuntualidad: estadoPunt
         });
-        cargar();
+        cargarRegistros();
     };
 
-    cargar();
+    // ELIMINAR REGISTRO
+    window.eliminarRegistro = async function(id) {
+        if (confirm("¿Estás seguro de que deseas eliminar este registro permanentemente?")) {
+            try {
+                await deleteDoc(doc(db, "registros", id));
+                cargarRegistros();
+            } catch (e) {
+                alert("Error al eliminar: " + e.message);
+            }
+        }
+    };
+
+    cargarRegistros();
 </script>
 </body>
 </html>
