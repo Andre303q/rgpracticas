@@ -62,6 +62,12 @@
             flex-wrap: wrap;
             gap: 15px;
         }
+        .filters-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
         .filter-box {
             display: flex;
             align-items: center;
@@ -71,13 +77,17 @@
             border-radius: 12px;
             border: 1px solid var(--border-color);
         }
-        .filter-box input {
+        .filter-box input, .filter-box select {
             background: transparent;
             border: none;
             color: var(--text-primary);
             outline: none;
             font-size: 0.85rem;
             font-family: inherit;
+        }
+        .filter-box select option {
+            background-color: var(--card-bg, #ffffff);
+            color: var(--text-primary, #000000);
         }
         .export-group {
             display: flex;
@@ -153,11 +163,24 @@
             <!-- VISTA 1: MARCACIONES Y FILTROS -->
             <div id="seccionMarcaciones">
                 <div class="toolbar-container">
-                    <!-- FILTRO DE FECHA -->
-                    <div class="filter-box">
-                        <span style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary);">FILTRAR FECHA:</span>
-                        <input type="date" id="inputFiltroFecha" onchange="filtrarRegistrosPorFecha()">
-                        <button type="button" onclick="limpiarFiltroFecha()" style="background: var(--primary-blue); color: white; border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; cursor: pointer;">Todos</button>
+                    <!-- GRUPO DE FILTROS (FECHA Y USUARIO) -->
+                    <div class="filters-group">
+                        <!-- FILTRO DE FECHA -->
+                        <div class="filter-box">
+                            <span style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary);">FECHA:</span>
+                            <input type="date" id="inputFiltroFecha" onchange="aplicarFiltrosMultiples()">
+                        </div>
+
+                        <!-- FILTRO DE USUARIO -->
+                        <div class="filter-box">
+                            <span style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary);">USUARIO:</span>
+                            <select id="selectFiltroUsuario" onchange="aplicarFiltrosMultiples()">
+                                <option value="">Todos los usuarios</option>
+                            </select>
+                        </div>
+
+                        <!-- BOTÓN LIMPIAR FILTROS -->
+                        <button type="button" onclick="limpiarFiltros()" style="background: var(--primary-blue); color: white; border: none; padding: 9px 14px; border-radius: 10px; font-size: 0.75rem; font-weight: 700; cursor: pointer;">Limpiar</button>
                     </div>
 
                     <!-- BOTONES DE EXPORTACIÓN -->
@@ -281,13 +304,43 @@
 
     const db = getFirestore(initializeApp(firebaseConfig));
     let listaRegistrosGlobal = [];
+    let listaUsuariosGlobal = [];
 
     async function cargarDatosAdmin() {
         const cuerpoTablaReg = document.getElementById("cuerpoTablaRegistros");
         const cuerpoTablaUsu = document.getElementById("cuerpoTablaUsuarios");
+        const selectUsuario = document.getElementById("selectFiltroUsuario");
 
         try {
-            // Cargar Registros
+            // 1. Cargar Usuarios
+            const snapUsu = await getDocs(collection(db, "usuarios"));
+            listaUsuariosGlobal = [];
+            let htmlUsu = "";
+            let optionsUsuarioHtml = `<option value="">Todos los usuarios</option>`;
+
+            if (snapUsu.empty) {
+                cuerpoTablaUsu.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-secondary);">No hay usuarios registrados.</td></tr>`;
+            } else {
+                snapUsu.forEach((doc) => {
+                    const u = doc.data();
+                    listaUsuariosGlobal.push(u);
+                    
+                    const nombreUsuario = u.nombre || u.usuario || 'Sin Nombre';
+                    optionsUsuarioHtml += `<option value="${nombreUsuario}">${nombreUsuario}</option>`;
+
+                    htmlUsu += `
+                        <tr>
+                            <td><strong>${u.nombre || 'Sin Nombre'}</strong></td>
+                            <td>${u.usuario}</td>
+                            <td><span style="padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; background: var(--pill-bg-info); color: var(--primary-blue);">${u.rol || 'practicante'}</span></td>
+                        </tr>
+                    `;
+                });
+                cuerpoTablaUsu.innerHTML = htmlUsu;
+                selectUsuario.innerHTML = optionsUsuarioHtml;
+            }
+
+            // 2. Cargar Registros
             const qReg = query(collection(db, "registros"), orderBy("creado", "desc"));
             const snapReg = await getDocs(qReg);
             listaRegistrosGlobal = [];
@@ -303,25 +356,6 @@
                 renderizarTablaRegistros(listaRegistrosGlobal);
             }
 
-            // Cargar Usuarios
-            const snapUsu = await getDocs(collection(db, "usuarios"));
-            if (snapUsu.empty) {
-                cuerpoTablaUsu.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-secondary);">No hay usuarios registrados.</td></tr>`;
-            } else {
-                let htmlUsu = "";
-                snapUsu.forEach((doc) => {
-                    const u = doc.data();
-                    htmlUsu += `
-                        <tr>
-                            <td><strong>${u.nombre || 'Sin Nombre'}</strong></td>
-                            <td>${u.usuario}</td>
-                            <td><span style="padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; background: var(--pill-bg-info); color: var(--primary-blue);">${u.rol || 'practicante'}</span></td>
-                        </tr>
-                    `;
-                });
-                cuerpoTablaUsu.innerHTML = htmlUsu;
-            }
-
         } catch (error) {
             cuerpoTablaReg.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #ef4444;">Error al cargar: ${error.message}</td></tr>`;
         }
@@ -330,7 +364,7 @@
     window.renderizarTablaRegistros = function(datos) {
         const cuerpoTablaReg = document.getElementById("cuerpoTablaRegistros");
         if (datos.length === 0) {
-            cuerpoTablaReg.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-secondary);">No hay registros para esta fecha.</td></tr>`;
+            cuerpoTablaReg.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-secondary);">No hay registros que coincidan con los filtros.</td></tr>`;
             return;
         }
 
@@ -348,7 +382,6 @@
                 claseBadge = "badge-amarillo";
             }
 
-            // Integración de la justificación enviada por el usuario desde el index.html
             let textoObservacion = r.observaciones || '-';
             if (r.justificacion) {
                 textoObservacion = `<strong style="color: var(--status-warning);">Justificación:</strong> ${r.justificacion} <br><small style="color: var(--text-secondary);">${r.observaciones || ''}</small>`;
@@ -395,19 +428,41 @@
         }
     }
 
-    window.filtrarRegistrosPorFecha = function() {
-        const inputVal = document.getElementById("inputFiltroFecha").value;
-        if (!inputVal) return;
+    // Filtrado combinado (Fecha y Usuario simultáneos)
+    window.aplicarFiltrosMultiples = function() {
+        const inputFechaVal = document.getElementById("inputFiltroFecha").value;
+        const usuarioSeleccionado = document.getElementById("selectFiltroUsuario").value;
 
-        const partes = inputVal.split("-");
-        const fechaFiltradaFormat = `${parseInt(partes[2])}/${parseInt(partes[1])}/${partes[0]}`;
+        let fechaFiltradaFormat = "";
+        if (inputFechaVal) {
+            const partes = inputFechaVal.split("-");
+            fechaFiltradaFormat = `${parseInt(partes[2])}/${parseInt(partes[1])}/${partes[0]}`;
+        }
 
-        const filtrados = listaRegistrosGlobal.filter(r => r.fechaHoy === fechaFiltradaFormat);
+        let filtrados = listaRegistrosGlobal.filter(r => {
+            // Filtro por fecha (si se seleccionó una)
+            let coincideFecha = true;
+            if (fechaFiltradaFormat) {
+                coincideFecha = (r.fechaHoy === fechaFiltradaFormat);
+            }
+
+            // Filtro por usuario (si se seleccionó uno)
+            let coincideUsuario = true;
+            if (usuarioSeleccionado) {
+                const nombreRegistro = (r.nombre || r.usuario || "").trim().toLowerCase();
+                const nombreFiltro = usuarioSeleccionado.trim().toLowerCase();
+                coincideUsuario = (nombreRegistro === nombreFiltro);
+            }
+
+            return coincideFecha && coincideUsuario;
+        });
+
         renderizarTablaRegistros(filtrados);
     }
 
-    window.limpiarFiltroFecha = function() {
+    window.limpiarFiltros = function() {
         document.getElementById("inputFiltroFecha").value = "";
+        document.getElementById("selectFiltroUsuario").value = "";
         renderizarTablaRegistros(listaRegistrosGlobal);
     }
 
