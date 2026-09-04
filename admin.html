@@ -82,6 +82,37 @@
             display: flex;
             gap: 10px;
         }
+
+        /* ==========================================
+           CLASES DE COLORES PARA LAS ETIQUETAS (BADGES)
+           ========================================== */
+        .badge-estado {
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: inline-block;
+        }
+        .badge-verde {
+            background-color: #ecfdf5 !important;
+            color: #10b981 !important;
+            border: 1px solid #a7f3d0 !important;
+        }
+        .badge-rojo {
+            background-color: #fef2f2 !important;
+            color: #ef4444 !important;
+            border: 1px solid #fecaca !important;
+        }
+        .badge-amarillo {
+            background-color: #fef3c7 !important;
+            color: #f59e0b !important;
+            border: 1px solid #fde68a !important;
+        }
+        .badge-gris {
+            background-color: #f1f5f9 !important;
+            color: #64748b !important;
+            border: 1px solid #cbd5e1 !important;
+        }
     </style>
 </head>
 <body>
@@ -173,7 +204,7 @@
         </div>
     </div>
 
-<!-- SCRIPT DE TEMA (Claro / Oscuro) Y PESTAÑAS -->
+<!-- SCRIPT DE TEMA Y PESTAÑAS -->
 <script>
     const btnToggle = document.getElementById("btnThemeToggle");
     const themeIcon = document.getElementById("themeIcon");
@@ -297,15 +328,15 @@
         datos.forEach((r) => {
             const estado = (r.estadoPuntualidad || "").toLowerCase();
             
-            // Colores dinámicos según el estado de puntualidad
-            let estiloBadge = "background: #f1f5f9; color: #64748b;"; // Por defecto (gris)
+            // Asignación de clases CSS con !important integrado en la cabecera
+            let claseBadge = "badge-gris";
             
             if (estado.includes("puntual") || estado.includes("temprano")) {
-                estiloBadge = "background: #ecfdf5; color: #10b981; border: 1px solid #a7f3d0;"; // Verde
+                claseBadge = "badge-verde";
             } else if (estado.includes("tarde") || estado.includes("impuntual") || estado.includes("retraso")) {
-                estiloBadge = "background: #fef2f2; color: #ef4444; border: 1px solid #fecaca;"; // Rojo
+                claseBadge = "badge-rojo";
             } else if (estado.includes("permiso") || estado.includes("justificado")) {
-                estiloBadge = "background: #fef3c7; color: #f59e0b; border: 1px solid #fde68a;"; // Amarillo/Ámbar
+                claseBadge = "badge-amarillo";
             }
 
             html += `
@@ -314,7 +345,7 @@
                     <td>${r.tipo}</td>
                     <td>${r.fechaHora}</td>
                     <td>${r.distanciaMetros} m</td>
-                    <td><span style="padding: 5px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; display: inline-block; ${estiloBadge}">${r.estadoPuntualidad || 'Registrado'}</span></td>
+                    <td><span class="badge-estado ${claseBadge}">${r.estadoPuntualidad || 'Registrado'}</span></td>
                     <td>${r.observaciones || '-'}</td>
                 </tr>
             `;
@@ -323,7 +354,7 @@
     }
 
     window.filtrarRegistrosPorFecha = function() {
-        const inputVal = document.getElementById("inputFiltroFecha").value; // Formato YYYY-MM-DD
+        const inputVal = document.getElementById("inputFiltroFecha").value;
         if (!inputVal) return;
 
         const partes = inputVal.split("-");
