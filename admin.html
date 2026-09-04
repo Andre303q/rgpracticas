@@ -12,7 +12,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
-        /* Estilos específicos para alinear el panel admin manteniendo tu diseño */
         .admin-wrapper {
             width: 100%;
             max-width: 1100px;
@@ -22,7 +21,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
             flex-wrap: wrap;
             gap: 15px;
         }
@@ -54,11 +53,34 @@
         tr:last-child td {
             border-bottom: none;
         }
-        .export-actions {
+        .toolbar-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .filter-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--input-bg);
+            padding: 8px 14px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+        .filter-box input {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            outline: none;
+            font-size: 0.85rem;
+            font-family: inherit;
+        }
+        .export-group {
             display: flex;
             gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
         }
     </style>
 </head>
@@ -74,53 +96,84 @@
                 </button>
             </div>
 
+            <!-- CABECERA DEL PANEL -->
             <div class="admin-header">
                 <div class="brand-box" style="text-align: left; margin: 0;">
                     <div class="logo-diamond" style="margin: 0 0 10px 0; width: 45px; height: 45px;"><span>RG</span></div>
                     <h1 style="font-size: 1.3rem;">Panel Administrativo</h1>
-                    <p>Gestión y supervisión de asistencias de practicantes</p>
+                    <p>Gestión de asistencia y usuarios</p>
                 </div>
                 <button class="btn-danger-link" id="btnCerrarSesionAdmin" style="width: auto; padding: 10px 20px; margin: 0;">Cerrar Sesión</button>
             </div>
 
-            <!-- BOTONES DE DESCARGA EXCEL Y PDF -->
-            <div class="export-actions">
-                <button type="button" class="btn-primary" onclick="exportarExcel()" style="background-color: #10b981; width: auto; padding: 10px 20px; font-size: 0.85rem; box-shadow: none;">
-                    📊 Descargar Excel
-                </button>
-                <button type="button" class="btn-primary" onclick="exportarPDF()" style="background-color: #ef4444; width: auto; padding: 10px 20px; font-size: 0.85rem; box-shadow: none;">
-                    📄 Descargar PDF
-                </button>
+            <!-- PESTAÑAS DE NAVEGACIÓN (Marcaciones / Usuarios) -->
+            <div class="nav-tabs" id="tabsAdmin" style="margin-bottom: 20px;">
+                <button class="tab-link active" id="tabMarcaciones" type="button" onclick="cambiarVistaAdmin('marcaciones')">Marcaciones</button>
+                <button class="tab-link" id="tabUsuarios" type="button" onclick="cambiarVistaAdmin('usuarios')">Usuarios Registrados</button>
             </div>
 
-            <h3 style="font-size: 1rem; color: var(--text-primary); margin-bottom: 10px;">📋 Registro de Asistencias</h3>
+            <!-- VISTA 1: MARCACIONES Y FILTROS -->
+            <div id="seccionMarcaciones">
+                <div class="toolbar-container">
+                    <!-- FILTRO DE FECHA -->
+                    <div class="filter-box">
+                        <span style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary);">FILTRAR FECHA:</span>
+                        <input type="date" id="inputFiltroFecha" onchange="filtrarRegistrosPorFecha()">
+                        <button type="button" onclick="limpiarFiltroFecha()" style="background: var(--primary-blue); color: white; border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; cursor: pointer;">Todos</button>
+                    </div>
 
-            <!-- TABLA DE REGISTROS -->
-            <div class="admin-table-container">
-                <table id="tablaAsistencias">
-                    <thead>
-                        <tr>
-                            <th>Practicante</th>
-                            <th>Tipo</th>
-                            <th>Fecha y Hora</th>
-                            <th>Distancia</th>
-                            <th>Puntualidad</th>
-                            <th>Observaciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="cuerpoTablaRegistros">
-                        <!-- Los datos se cargarán dinámicamente desde Firebase -->
-                        <tr>
-                            <td colspan="6" style="text-align: center; color: var(--text-secondary);">Cargando registros...</td>
-                        </tr>
-                    </tbody>
-                </table>
+                    <!-- BOTONES DE EXPORTACIÓN -->
+                    <div class="export-group">
+                        <button type="button" class="btn-primary" onclick="exportarExcel()" style="background-color: #10b981; width: auto; padding: 10px 16px; font-size: 0.82rem; box-shadow: none;">📊 Excel</button>
+                        <button type="button" class="btn-primary" onclick="exportarPDF()" style="background-color: #ef4444; width: auto; padding: 10px 16px; font-size: 0.82rem; box-shadow: none;">📄 PDF</button>
+                    </div>
+                </div>
+
+                <h3 style="font-size: 1rem; color: var(--text-primary); margin-bottom: 10px;">🕒 Registro de Asistencias</h3>
+
+                <div class="admin-table-container">
+                    <table id="tablaAsistencias">
+                        <thead>
+                            <tr>
+                                <th>Practicante</th>
+                                <th>Tipo Marcación</th>
+                                <th>Fecha y Hora</th>
+                                <th>Distancia</th>
+                                <th>Puntualidad</th>
+                                <th>Observaciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cuerpoTablaRegistros">
+                            <tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">Cargando registros...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- VISTA 2: USUARIOS REGISTRADOS -->
+            <div id="seccionUsuarios" class="hidden">
+                <h3 style="font-size: 1rem; color: var(--text-primary); margin-bottom: 10px;">👥 Lista de Usuarios Registrados</h3>
+
+                <div class="admin-table-container">
+                    <table id="tablaUsuarios">
+                        <thead>
+                            <tr>
+                                <th>Nombre Completo</th>
+                                <th>Usuario</th>
+                                <th>Rol</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cuerpoTablaUsuarios">
+                            <tr><td colspan="3" style="text-align: center; color: var(--text-secondary);">Cargando usuarios...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
         </div>
     </div>
 
-<!-- SCRIPT PARA EL TEMA (Claro/Oscuro) -->
+<!-- SCRIPT DE TEMA (Claro / Oscuro) -->
 <script>
     const btnToggle = document.getElementById("btnThemeToggle");
     const themeIcon = document.getElementById("themeIcon");
@@ -152,9 +205,29 @@
     document.getElementById("btnCerrarSesionAdmin").addEventListener("click", () => {
         window.location.href = "index.html";
     });
+
+    // Control de pestañas del panel
+    function cambiarVistaAdmin(vista) {
+        const secMarcaciones = document.getElementById("seccionMarcaciones");
+        const secUsuarios = document.getElementById("seccionUsuarios");
+        const tabMarc = document.getElementById("tabMarcaciones");
+        const tabUsu = document.getElementById("tabUsuarios");
+
+        if (vista === 'marcaciones') {
+            secMarcaciones.classList.remove("hidden");
+            secUsuarios.classList.add("hidden");
+            tabMarc.classList.add("active");
+            tabUsu.classList.remove("active");
+        } else {
+            secUsuarios.classList.remove("hidden");
+            secMarcaciones.classList.add("hidden");
+            tabUsu.classList.add("active");
+            tabMarc.classList.remove("active");
+        }
+    }
 </script>
 
-<!-- SCRIPT DE FIREBASE PARA LLENAR LA TABLA Y FUNCIONES DE DESCARGA -->
+<!-- SCRIPT FIREBASE Y DATOS -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -169,42 +242,95 @@
     };
 
     const db = getFirestore(initializeApp(firebaseConfig));
+    let listaRegistrosGlobal = [];
 
-    async function cargarRegistrosAdmin() {
-        const cuerpoTabla = document.getElementById("cuerpoTablaRegistros");
+    async function cargarDatosAdmin() {
+        const cuerpoTablaReg = document.getElementById("cuerpoTablaRegistros");
+        const cuerpoTablaUsu = document.getElementById("cuerpoTablaUsuarios");
+
         try {
-            const q = query(collection(db, "registros"), orderBy("creado", "desc"));
-            const querySnapshot = await getDocs(q);
+            // Cargar Registros
+            const qReg = query(collection(db, "registros"), orderBy("creado", "desc"));
+            const snapReg = await getDocs(qReg);
+            listaRegistrosGlobal = [];
 
-            if (querySnapshot.empty) {
-                cuerpoTabla.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">No hay registros disponibles.</td></tr>`;
-                return;
+            if (snapReg.empty) {
+                cuerpoTablaReg.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">No hay registros disponibles.</td></tr>`;
+            } else {
+                snapReg.forEach((doc) => {
+                    listaRegistrosGlobal.push(doc.data());
+                });
+                renderizarTablaRegistros(listaRegistrosGlobal);
             }
 
-            let html = "";
-            querySnapshot.forEach((doc) => {
-                const r = doc.data();
-                html += `
-                    <tr>
-                        <td><strong>${r.nombre || r.usuario}</strong></td>
-                        <td>${r.tipo}</td>
-                        <td>${r.fechaHora}</td>
-                        <td>${r.distanciaMetros} m</td>
-                        <td><span style="padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; background: #ecfdf5; color: #10b981;">${r.estadoPuntualidad}</span></td>
-                        <td>${r.observaciones || '-'}</td>
-                    </tr>
-                `;
-            });
-            cuerpoTabla.innerHTML = html;
+            // Cargar Usuarios
+            const snapUsu = await getDocs(collection(db, "usuarios"));
+            if (snapUsu.empty) {
+                cuerpoTablaUsu.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-secondary);">No hay usuarios registrados.</td></tr>`;
+            } else {
+                let htmlUsu = "";
+                snapUsu.forEach((doc) => {
+                    const u = doc.data();
+                    htmlUsu += `
+                        <tr>
+                            <td><strong>${u.nombre || 'Sin Nombre'}</strong></td>
+                            <td>${u.usuario}</td>
+                            <td><span style="padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; background: var(--pill-bg-info); color: var(--primary-blue);">${u.rol || 'practicante'}</span></td>
+                        </tr>
+                    `;
+                });
+                cuerpoTablaUsu.innerHTML = htmlUsu;
+            }
+
         } catch (error) {
-            cuerpoTabla.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #ef4444;">Error al cargar datos: ${error.message}</td></tr>`;
+            cuerpoTablaReg.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #ef4444;">Error al cargar: ${error.message}</td></tr>`;
         }
     }
 
-    cargarRegistrosAdmin();
+    window.renderizarTablaRegistros = function(datos) {
+        const cuerpoTablaReg = document.getElementById("cuerpoTablaRegistros");
+        if (datos.length === 0) {
+            cuerpoTablaReg.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">No hay registros para esta fecha.</td></tr>`;
+            return;
+        }
+
+        let html = "";
+        datos.forEach((r) => {
+            html += `
+                <tr>
+                    <td><strong>${r.nombre || r.usuario}</strong></td>
+                    <td>${r.tipo}</td>
+                    <td>${r.fechaHora}</td>
+                    <td>${r.distanciaMetros} m</td>
+                    <td><span style="padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; background: #ecfdf5; color: #10b981;">${r.estadoPuntualidad}</span></td>
+                    <td>${r.observaciones || '-'}</td>
+                </tr>
+            `;
+        });
+        cuerpoTablaReg.innerHTML = html;
+    }
+
+    window.filtrarRegistrosPorFecha = function() {
+        const inputVal = document.getElementById("inputFiltroFecha").value; // Formato YYYY-MM-DD
+        if (!inputVal) return;
+
+        // Convertir YYYY-MM-DD a DD/MM/YYYY para que coincida con fechaHoy ("4/9/2026" o similar)
+        const partes = inputVal.split("-");
+        const fechaFiltradaFormat = `${parseInt(partes[2])}/${parseInt(partes[1])}/${partes[0]}`;
+
+        const filtrados = listaRegistrosGlobal.filter(r => r.fechaHoy === fechaFiltradaFormat);
+        renderizarTablaRegistros(filtrados);
+    }
+
+    window.limpiarFiltroFecha = function() {
+        document.getElementById("inputFiltroFecha").value = "";
+        renderizarTablaRegistros(listaRegistrosGlobal);
+    }
+
+    cargarDatosAdmin();
 </script>
 
-<!-- FUNCIONES GLOBALES DE EXPORTACIÓN -->
+<!-- SCRIPT DE EXPORTACIÓN EXCEL Y PDF -->
 <script>
     function exportarExcel() {
         const tabla = document.getElementById("tablaAsistencias");
