@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RGPracticas - Iniciar Sesión</title>
+    <title>RGPracticas - Control de Asistencia</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
@@ -16,8 +16,8 @@
             background-color: var(--bg-color, #0f172a);
             font-family: 'Plus Jakarta Sans', sans-serif;
         }
-        .login-card {
-            max-width: 400px;
+        .container-box {
+            max-width: 450px;
             width: 100%;
             background: var(--card-bg, #1a1f2c);
             padding: 30px;
@@ -51,7 +51,7 @@
         input:focus {
             border-color: #0284c7;
         }
-        .btn-submit {
+        .btn-action {
             width: 100%;
             background: #0284c7;
             color: white;
@@ -63,7 +63,7 @@
             cursor: pointer;
             transition: background 0.2s;
         }
-        .btn-submit:hover {
+        .btn-action:hover {
             background: #0369a1;
         }
         .error-msg {
@@ -73,36 +73,83 @@
             margin-top: 15px;
             font-weight: 600;
         }
+        .hidden {
+            display: none !important;
+        }
+        .btn-marcacion {
+            width: 100%;
+            padding: 14px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border: none;
+            margin-bottom: 10px;
+            color: white;
+            transition: opacity 0.2s;
+        }
+        .btn-marcacion:hover { opacity: 0.9; }
+        .btn-entrada { background: #10b981; }
+        .btn-salida-almuerzo { background: #f59e0b; }
+        .btn-regreso-almuerzo { background: #3b82f6; }
+        .btn-salida { background: #ef4444; }
     </style>
 </head>
 <body>
 
-    <div class="login-card">
-        <div style="text-align: center; margin-bottom: 25px;">
-            <div class="logo-diamond" style="width: 48px; height: 48px; margin: 0 auto 12px; font-size: 1.1rem;"><span>RG</span></div>
-            <h1 style="font-size: 1.4rem; margin: 0; color: var(--text-primary);">RGPracticas</h1>
-            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px;">Ingresa a tu cuenta para continuar</p>
+    <div class="container-box">
+        
+        <!-- VISTA 1: FORMULARIO DE LOGIN -->
+        <div id="seccionLogin">
+            <div style="text-align: center; margin-bottom: 25px;">
+                <div class="logo-diamond" style="width: 48px; height: 48px; margin: 0 auto 12px; font-size: 1.1rem;"><span>RG</span></div>
+                <h1 style="font-size: 1.4rem; margin: 0; color: var(--text-primary);">RGPracticas</h1>
+                <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px;">Ingresa a tu cuenta para continuar</p>
+            </div>
+
+            <form id="formLogin">
+                <div class="form-group">
+                    <label for="txtUsuario">Usuario o Correo</label>
+                    <input type="text" id="txtUsuario" required placeholder="Ingresa tu usuario...">
+                </div>
+
+                <div class="form-group">
+                    <label for="txtPassword">Contraseña</label>
+                    <input type="password" id="txtPassword" required placeholder="••••••••">
+                </div>
+
+                <button type="submit" class="btn-action" id="btnLogin">Iniciar Sesión</button>
+                <div id="mensajeError" class="error-msg"></div>
+            </form>
         </div>
 
-        <form id="formLogin">
-            <div class="form-group">
-                <label for="txtUsuario">Usuario o Correo</label>
-                <input type="text" id="txtUsuario" required placeholder="Ingresa tu usuario...">
+        <!-- VISTA 2: PANEL DEL PRACTICANTE (OCULTO HASTA INICIAR SESIÓN) -->
+        <div id="seccionDashboard" class="hidden">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div>
+                    <h2 id="lblNombreUsuario" style="font-size: 1.2rem; margin: 0; color: var(--text-primary);">Bienvenido</h2>
+                    <p style="font-size: 0.75rem; color: var(--text-secondary); margin: 2px 0 0 0;">Panel de Asistencia GPS</p>
+                </div>
+                <button id="btnCerrarSesion" class="btn-action" style="width: auto; padding: 6px 12px; font-size: 0.75rem; background: #ef4444;">Salir</button>
             </div>
 
-            <div class="form-group">
-                <label for="txtPassword">Contraseña</label>
-                <input type="password" id="txtPassword" required placeholder="••••••••">
+            <div style="text-align: center; margin-bottom: 15px;">
+                <p id="lblUbicacionEstado" style="font-size: 0.8rem; color: var(--text-secondary);">Obteniendo ubicación GPS...</p>
             </div>
 
-            <button type="submit" class="btn-submit" id="btnLogin">Iniciar Sesión</button>
-            <div id="mensajeError" class="error-msg"></div>
-        </form>
+            <div>
+                <button class="btn-marcacion btn-entrada" onclick="registrarAsistencia('Hora de entrada')">🟢 Registrar Entrada</button>
+                <button class="btn-marcacion btn-salida-almuerzo" onclick="registrarAsistencia('Hora de salida a almuerzo')">🟠 Salida a Almuerzo</button>
+                <button class="btn-marcacion btn-regreso-almuerzo" onclick="registrarAsistencia('Hora de regreso de almuerzo')">🔵 Regreso de Almuerzo</button>
+                <button class="btn-marcacion btn-salida" onclick="registrarAsistencia('Hora de salida')">🔴 Registrar Salida</button>
+            </div>
+        </div>
+
     </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, query, where } 
+    import { getFirestore, collection, getDocs, addDoc, query, where, serverTimestamp } 
         from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -116,6 +163,28 @@
 
     const db = getFirestore(initializeApp(firebaseConfig));
 
+    const seccionLogin = document.getElementById("seccionLogin");
+    const seccionDashboard = document.getElementById("seccionDashboard");
+    const lblNombreUsuario = document.getElementById("lblNombreUsuario");
+
+    // Verificar si ya había una sesión guardada en este navegador
+    const usuarioGuardado = localStorage.getItem("usuarioLogueado");
+    const rolGuardado = localStorage.getItem("rolUsuario");
+    const nombreGuardado = localStorage.getItem("nombreUsuario");
+
+    if (usuarioGuardado) {
+        if (rolGuardado === "admin") {
+            window.location.href = "admin.html"; // Si es admin, lo manda a su panel
+        } else {
+            // Si es practicante, oculta el login y muestra el panel aquí mismo
+            seccionLogin.classList.add("hidden");
+            seccionDashboard.classList.remove("hidden");
+            lblNombreUsuario.textContent = `Hola, ${nombreGuardado || usuarioGuardado}`;
+            iniciarGPS();
+        }
+    }
+
+    // Proceso de inicio de sesión
     document.getElementById("formLogin").addEventListener("submit", async (e) => {
         e.preventDefault();
         const usuarioInput = document.getElementById("txtUsuario").value.trim();
@@ -128,12 +197,10 @@
         btnLogin.disabled = true;
 
         try {
-            // Buscamos el usuario en la colección "usuarios" de Firestore
             const q = query(collection(db, "usuarios"), where("usuario", "==", usuarioInput));
             const querySnapshot = await getDocs(q);
 
             if (querySnapshot.empty) {
-                // Intento alternativo buscando por campo ID o nombre si es necesario
                 mensajeError.textContent = "Usuario o contraseña incorrectos.";
                 btnLogin.textContent = "Iniciar Sesión";
                 btnLogin.disabled = false;
@@ -146,16 +213,17 @@
             });
 
             if (usuarioEncontrado.password === passwordInput) {
-                // Guardamos sesión en localStorage
                 localStorage.setItem("usuarioLogueado", usuarioEncontrado.usuario || usuarioInput);
                 localStorage.setItem("rolUsuario", usuarioEncontrado.rol || "practicante");
                 localStorage.setItem("nombreUsuario", usuarioEncontrado.nombre || usuarioInput);
 
-                // Redirección según rol
                 if (usuarioEncontrado.rol === "admin") {
                     window.location.href = "admin.html";
                 } else {
-                    window.location.href = "dashboard.html"; // O la vista de practicante correspondiente
+                    seccionLogin.classList.add("hidden");
+                    seccionDashboard.classList.remove("hidden");
+                    lblNombreUsuario.textContent = `Hola, ${usuarioEncontrado.nombre || usuarioInput}`;
+                    iniciarGPS();
                 }
             } else {
                 mensajeError.textContent = "Contraseña incorrecta.";
@@ -169,7 +237,96 @@
             btnLogin.disabled = false;
         }
     });
-</script>
 
+    // Lógica de GPS y marcaciones
+    let latUsuario = null;
+    let lonUsuario = null;
+
+    function iniciarGPS() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    latUsuario = position.coords.latitude;
+                    lonUsuario = position.coords.longitude;
+                    document.getElementById("lblUbicacionEstado").textContent = "📍 Ubicación GPS detectada.";
+                    document.getElementById("lblUbicacionEstado").style.color = "#10b981";
+                },
+                (error) => {
+                    document.getElementById("lblUbicacionEstado").textContent = "⚠️ Activa los permisos de GPS.";
+                    document.getElementById("lblUbicacionEstado").style.color = "#ef4444";
+                },
+                { enableHighAccuracy: true }
+            );
+        }
+    }
+
+    window.registrarAsistencia = async function(tipoMarcacion) {
+        if (!latUsuario || !lonUsuario) {
+            alert("Es necesario permitir el acceso a la ubicación GPS.");
+            return;
+        }
+
+        const ahora = new Date();
+        const fechaHoraStr = ahora.toLocaleString("es-PE");
+        const fechaHoyStr = `${ahora.getDate()}/${ahora.getMonth() + 1}/${ahora.getFullYear()}`;
+
+        const latEmpresa = -12.0464; 
+        const lonEmpresa = -77.0428;
+        const distancia = calcularDistanciaMetros(latUsuario, lonUsuario, latEmpresa, lonEmpresa);
+        
+        let estadoPuntualidad = "Puntual";
+        let observaciones = "-";
+
+        if (distancia > 100) {
+            estadoPuntualidad = "Descuidado";
+            observaciones = `Fuera de rango (${Math.round(distancia)}m)`;
+        }
+
+        let justificacion = "";
+        if (estadoPuntualidad !== "Puntual") {
+            justificacion = prompt("Estás marcando fuera de rango o tarde. Ingresa una justificación:") || "";
+            if (justificacion.trim() !== "") {
+                estadoPuntualidad = "Apelado / Justificado";
+            }
+        }
+
+        try {
+            await addDoc(collection(db, "registros"), {
+                usuario: localStorage.getItem("usuarioLogueado"),
+                nombre: localStorage.getItem("nombreUsuario"),
+                tipo: tipoMarcacion,
+                fechaHora: fechaHoraStr,
+                fechaHoy: fechaHoyStr,
+                latitud: latUsuario,
+                longitud: lonUsuario,
+                distanciaMetros: Math.round(distancia),
+                estadoPuntualidad: estadoPuntualidad,
+                observaciones: observaciones,
+                justificacion: justificacion,
+                creado: serverTimestamp()
+            });
+
+            alert(`¡Registrado con éxito: ${tipoMarcacion}!`);
+        } catch (e) {
+            alert("Error al registrar: " + e.message);
+        }
+    };
+
+    function calcularDistanciaMetros(lat1, lon1, lat2, lon2) {
+        const R = 6371e3;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+    }
+
+    document.getElementById("btnCerrarSesion").addEventListener("click", () => {
+        localStorage.clear();
+        location.reload(); // Recarga la página volviendo al login
+    });
+</script>
 </body>
 </html>
