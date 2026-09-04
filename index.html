@@ -1,141 +1,178 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RGPracticas - Portal de Asistencia</title>
+    <title>RGPracticas - Panel de Practicante</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    
+    <style>
+        /* Estilos para la campanita de notificaciones */
+        .notification-container {
+            position: relative;
+            display: inline-block;
+        }
+        .bell-btn {
+            background: var(--input-bg, #111827);
+            border: 1px solid var(--border-color, #2d3748);
+            color: var(--text-primary, #fff);
+            padding: 8px 12px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1rem;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            transition: background 0.2s;
+        }
+        .bell-btn:hover {
+            background: rgba(2, 132, 199, 0.2);
+        }
+        .notification-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background: #ef4444;
+            color: white;
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 10px;
+            border: 2px solid var(--card-bg, #1a1f2c);
+        }
+        .notification-dropdown {
+            position: absolute;
+            right: 0;
+            top: 50px;
+            width: 320px;
+            max-height: 400px;
+            overflow-y: auto;
+            background: var(--card-bg, #1a1f2c);
+            border: 1px solid var(--border-color, #2d3748);
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+            z-index: 1000;
+            padding: 12px;
+            box-sizing: border-box;
+        }
+        .notification-item {
+            padding: 10px;
+            border-bottom: 1px solid var(--border-color, #2d3748);
+            font-size: 0.8rem;
+        }
+        .notification-item:last-child {
+            border-bottom: none;
+        }
+        .status-pill {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+        .status-revision { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+        .status-aprobado { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .status-rechazado { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .hidden { display: none !important; }
+    </style>
 </head>
 <body>
 
-    <div class="app-wrapper">
-        <div class="card">
-            <!-- BOTÓN CAMBIO DE TEMA DENTRO DEL CONTAINER -->
-            <div class="theme-switch-container">
-                <button class="theme-toggle-btn" id="btnThemeToggle" type="button">
-                    <span id="themeIcon">🌙</span> <span id="themeText">Oscuro</span>
+    <div class="admin-container" style="max-width: 800px;">
+        <!-- HEADER CON CAMPANITA -->
+        <div class="admin-header" style="align-items: center;">
+            <div>
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+                    <div class="logo-diamond" style="width: 30px; height: 30px; font-size: 0.75rem;"><span>RG</span></div>
+                    <h1 id="lblBienvenida" style="font-size: 1.3rem; margin: 0; color: var(--text-primary);">Panel del Practicante</h1>
+                </div>
+                <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 0;">Gestiona tus marcaciones y revisa tus estatus</p>
+            </div>
+            
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <!-- CAMPANITA DE NOTIFICACIONES -->
+                <div class="notification-container">
+                    <button class="bell-btn" id="btnCampana" type="button" title="Notificaciones de Justificaciones">
+                        🔔
+                        <span id="notifBadge" class="notification-badge hidden">0</span>
+                    </button>
+
+                    <!-- DESPLEGABLE DE NOTIFICACIONES -->
+                    <div id="dropdownNotificaciones" class="notification-dropdown hidden">
+                        <div style="font-weight: 700; font-size: 0.85rem; margin-bottom: 8px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
+                            <span>Mis Justificaciones</span>
+                            <span style="font-size: 0.7rem; color: var(--text-secondary);">Actualizado</span>
+                        </div>
+                        <div id="listaNotificaciones">
+                            <div style="text-align: center; color: var(--text-secondary); padding: 15px 0; font-size: 0.8rem;">Cargando notificaciones...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="theme-toggle-btn" id="btnThemeToggle" type="button" style="padding: 6px 12px; font-size: 0.8rem;">
+                    <span id="themeIcon">☀️</span>
                 </button>
+                <button id="btnCerrarSesion" class="btn-danger-link" style="width: auto; padding: 7px 12px; margin: 0; font-size: 0.78rem;">Salir</button>
             </div>
+        </div>
 
-            <div class="brand-box">
-                <div class="logo-diamond"><span>RG</span></div>
-                <h1>RGPracticas</h1>
-                <p id="subtituloCard">Portal de Asistencia</p>
-            </div>
-
-            <!-- NAVEGACIÓN INGRESAR / REGISTRO -->
-            <div class="nav-tabs" id="tabsAuth">
-                <button class="tab-link active" id="tabLogin" type="button" onclick="cambiarModo('login')">Ingresar</button>
-                <button class="tab-link" id="tabRegister" type="button" onclick="cambiarModo('registro')">Registro</button>
-            </div>
-
-            <!-- FORMULARIO -->
-            <form id="authForm">
-                <div class="input-block hidden" id="groupNombre">
-                    <label>Nombre Completo</label>
-                    <div class="input-icon-wrapper">
-                        <span class="icon">👤</span>
-                        <input type="text" id="txtNombre" placeholder="Ej. Carlos García">
-                    </div>
-                </div>
-
-                <div class="input-block">
-                    <label>USUARIO</label>
-                    <div class="input-icon-wrapper">
-                        <span class="icon">👤</span>
-                        <input type="text" id="txtUsuario" placeholder="Ej. carlos123" required autocomplete="off">
-                    </div>
-                </div>
-
-                <div class="input-block">
-                    <label>CONTRASEÑA</label>
-                    <div class="input-icon-wrapper">
-                        <span class="icon">🔒</span>
-                        <input type="password" id="txtPassword" placeholder="••••••••" required>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn-primary" id="btnSubmit">Iniciar Sesión</button>
-                <div id="alertAuth" class="alert-msg hidden"></div>
-            </form>
-
-            <!-- VISTA MARCACIÓN -->
-            <div id="vistaMarcacion" class="hidden">
-                <div class="gps-pill info" id="statusGeo">
-                    📡 Obteniendo ubicación GPS...
-                </div>
-
-                <form id="marcacionForm">
-                    <div class="input-block">
-                        <label>Tipo de Registro</label>
-                        <div class="input-icon-wrapper">
-                            <span class="icon">🕒</span>
-                            <select id="tipoMarcacion" disabled style="padding-left: 40px;">
-                                <option value="Hora de entrada">Hora de entrada</option>
-                                <option value="Hora de salida a almuerzo">Hora de salida a almuerzo</option>
-                                <option value="Hora de regreso de almuerzo">Hora de regreso de almuerzo</option>
-                                <option value="Hora de salida">Hora de salida</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="btn-primary" id="btnMarcar" disabled>Registrar Marcación</button>
-                </form>
-
-                <div id="alertMarcacion" class="alert-msg hidden"></div>
-
-                <!-- BLOQUE DE JUSTIFICACIÓN (SOLO TEXTO) -->
-                <div id="boxJustificar" class="hidden" style="margin-top: 18px; border-top: 1px dashed var(--border-color); padding-top: 16px;">
-                    <label style="font-size: 0.75rem; font-weight: 800; color: var(--status-warning); display: block; margin-bottom: 6px;">⚠️ JUSTIFICAR IMPUNTUALIDAD / SALIDA</label>
-                    
-                    <div class="input-block">
-                        <div class="input-icon-wrapper">
-                            <span class="icon" style="top: 12px;">📝</span>
-                            <textarea id="txtJustificacion" rows="3" placeholder="Describe la razón aquí..."></textarea>
-                        </div>
-                    </div>
-
-                    <button class="btn-primary" id="btnEnviarJustificacion" type="button" style="background: var(--status-warning); box-shadow: none; margin-top: 12px;">Enviar Motivo</button>
-                </div>
-
-                <button class="btn-danger-link" id="btnCerrarSesion" type="button">Cerrar Sesión</button>
-            </div>
-
+        <!-- RESTO DE TU CONTENIDO DE MARCACIONES / DASHBOARD -->
+        <div style="background: var(--input-bg, #111827); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color, #2d3748); text-align: center;">
+            <h3 style="margin-top: 0; color: var(--text-primary);">¡Bienvenido a tu panel!</h3>
+            <p style="font-size: 0.85rem; color: var(--text-secondary);">Aquí puedes realizar tus marcaciones diarias de entrada, salida y almuerzo. Haz clic en la campanita superior (🔔) en cualquier momento para ver si tus justificaciones han sido aprobadas o rechazadas.</p>
         </div>
     </div>
 
 <script>
+    // Control de tema claro/oscuro
     const btnToggle = document.getElementById("btnThemeToggle");
     const themeIcon = document.getElementById("themeIcon");
-    const themeText = document.getElementById("themeText");
 
     function aplicarTema(tema) {
         if (tema === "dark") {
             document.documentElement.setAttribute("data-theme", "dark");
             themeIcon.textContent = "☀️";
-            themeText.textContent = "Claro";
         } else {
             document.documentElement.setAttribute("data-theme", "light");
             themeIcon.textContent = "🌙";
-            themeText.textContent = "Oscuro";
         }
     }
-
-    const temaGuardado = localStorage.getItem("tema_app");
-    const prefiereOscuro = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    aplicarTema(temaGuardado || (prefiereOscuro ? "dark" : "light"));
+    const temaGuardado = localStorage.getItem("tema_app") || "dark";
+    aplicarTema(temaGuardado);
 
     btnToggle.addEventListener("click", () => {
-        const nuevoTema = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
-        aplicarTema(nuevoTema);
-        localStorage.setItem("tema_app", nuevoTema);
+        const actual = document.documentElement.getAttribute("data-theme");
+        const nuevo = actual === "dark" ? "light" : "dark";
+        aplicarTema(nuevo);
+        localStorage.setItem("tema_app", nuevo);
+    });
+
+    // Abrir / Cerrar el menú desplegable de la campanita
+    const btnCampana = document.getElementById("btnCampana");
+    const dropdownNotificaciones = document.getElementById("dropdownNotificaciones");
+
+    btnCampana.addEventListener("click", (e) => {
+        e.stopPropagation();
+        dropdownNotificaciones.classList.toggle("hidden");
+    });
+
+    document.addEventListener("click", () => {
+        dropdownNotificaciones.classList.add("hidden");
+    });
+
+    dropdownNotificaciones.addEventListener("click", (e) => {
+        e.stopPropagation();
     });
 </script>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, collection, serverTimestamp, query, where, getDocs } 
+    import { getFirestore, collection, getDocs, query, where, orderBy } 
         from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -149,218 +186,88 @@
 
     const db = getFirestore(initializeApp(firebaseConfig));
 
-    const LAT_REF = 14.6045042; 
-    const LON_REF = -90.5163326;
-    const DISTANCIA_MAXIMA = 100; 
+    // Obtener el usuario actual logueado (guardado en localStorage al iniciar sesión)
+    // Asegúrate de guardar el usuario al hacer login ej: localStorage.setItem("usuarioLogueado", username);
+    const usuarioActual = localStorage.getItem("usuarioLogueado") || localStorage.getItem("nombreUsuario") || "";
 
-    let usuarioActual = null;
-    let distanciaActual = 0;
-    let latitudDispositivo = null;
-    let longitudDispositivo = null;
-    let modoActual = 'login';
-    let geoWatchId = null;
-    let ultimoRegistroId = null;
+    async function cargarNotificacionesJustificaciones() {
+        const contenedorLista = document.getElementById("listaNotificaciones");
+        const notifBadge = document.getElementById("notifBadge");
 
-    window.cambiarModo = function(modo) {
-        modoActual = modo;
-        document.getElementById("alertAuth").classList.add("hidden");
-        if (modo === 'registro') {
-            document.getElementById("groupNombre").classList.remove("hidden");
-            document.getElementById("btnSubmit").textContent = "Crear Cuenta";
-            document.getElementById("tabRegister").classList.add("active");
-            document.getElementById("tabLogin").classList.remove("active");
-        } else {
-            document.getElementById("groupNombre").classList.add("hidden");
-            document.getElementById("btnSubmit").textContent = "Iniciar Sesión";
-            document.getElementById("tabLogin").classList.add("active");
-            document.getElementById("tabRegister").classList.remove("active");
-        }
-    };
-
-    document.getElementById("authForm").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const userInput = document.getElementById("txtUsuario").value.trim().toLowerCase();
-        const passInput = document.getElementById("txtPassword").value.trim();
-        const nombreInput = document.getElementById("txtNombre").value.trim();
-        const alertAuth = document.getElementById("alertAuth");
-
-        if (userInput === "admin" && passInput === "1234") {
-            window.location.href = "admin.html";
+        if (!usuarioActual) {
+            contenedorLista.innerHTML = `<div style="text-align: center; color: var(--text-secondary); padding: 10px; font-size: 0.78rem;">No hay sesión activa identificada.</div>`;
             return;
         }
 
         try {
-            const userRef = doc(db, "usuarios", userInput);
-            const userSnap = await getDoc(userRef);
+            // Consultamos todos los registros del usuario que tengan justificación
+            const q = query(collection(db, "registros"), orderBy("creado", "desc"));
+            const snapshot = await getDocs(q);
 
-            if (modoActual === 'registro') {
-                if (userSnap.exists()) return mostrarAlerta(alertAuth, "El usuario ya existe.", "error");
-                if (!nombreInput) return mostrarAlerta(alertAuth, "Ingresa tu nombre.", "error");
-
-                const nuevo = { usuario: userInput, password: passInput, nombre: nombreInput, rol: "practicante", creado: serverTimestamp() };
-                await setDoc(userRef, nuevo);
-                usuarioActual = nuevo;
-                iniciarPanelPracticante();
-            } else {
-                if (!userSnap.exists()) return mostrarAlerta(alertAuth, "Usuario no existe.", "error");
-                const data = userSnap.data();
-                if (data.password !== passInput) return mostrarAlerta(alertAuth, "Contraseña incorrecta.", "error");
-
-                if (data.rol === "admin") {
-                    window.location.href = "admin.html";
-                } else {
-                    usuarioActual = data;
-                    iniciarPanelPracticante();
+            let misJustificaciones = [];
+            snapshot.forEach(d => {
+                const data = d.data();
+                // Filtramos por el usuario actual (coincidencia en usuario o nombre)
+                if (data.usuario === usuarioActual || data.nombre === usuarioActual) {
+                    if (data.justificacion && data.justificacion.trim() !== "") {
+                        misJustificaciones.push({ id: d.id, ...data });
+                    }
                 }
-            }
-        } catch (err) {
-            mostrarAlerta(alertAuth, "Error: " + err.message, "error");
-        }
-    });
+            });
 
-    function iniciarPanelPracticante() {
-        document.getElementById("authForm").classList.add("hidden");
-        document.getElementById("tabsAuth").classList.add("hidden");
-        document.getElementById("subtituloCard").textContent = "Hola, " + (usuarioActual.nombre || usuarioActual.usuario);
-        document.getElementById("vistaMarcacion").classList.remove("hidden");
-        obtenerUbicacionRealTime();
+            if (misJustificaciones.length === 0) {
+                contenedorLista.innerHTML = `<div style="text-align: center; color: var(--text-secondary); padding: 15px 0; font-size: 0.8rem;">No has enviado ninguna justificación.</div>`;
+                notifBadge.classList.add("hidden");
+                return;
+            }
+
+            contenedorLista.innerHTML = "";
+            let pendientesRevision = 0;
+
+            misJustificaciones.forEach(j => {
+                let estadoTexto = "En revisión";
+                let clasePill = "status-revision";
+
+                if (j.estadoPuntualidad === "Justificación Aprobada") {
+                    estadoTexto = "Aprobado";
+                    clasePill = "status-aprobado";
+                } else if (j.estadoPuntualidad === "Justificación Rechazada") {
+                    estadoTexto = "Rechazado";
+                    clasePill = "status-rechazado";
+                } else {
+                    pendientesRevision++;
+                }
+
+                const divItem = document.createElement("div");
+                divItem.className = "notification-item";
+                divItem.innerHTML = `
+                    <div style="font-weight: 600; color: var(--text-primary);">📅 ${j.tipo} (${j.fechaHora || 'N/D'})</div>
+                    <div style="color: var(--text-secondary); font-size: 0.75rem; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">"${j.justificacion}"</div>
+                    <div><span class="status-pill ${clasePill}">Estatus: ${estadoTexto}</span></div>
+                `;
+                contenedorLista.appendChild(divItem);
+            });
+
+            // Mostrar la cantidad de pendientes o notificaciones totales en el badge rojo
+            if (misJustificaciones.length > 0) {
+                notifBadge.textContent = misJustificaciones.length;
+                notifBadge.classList.remove("hidden");
+            } else {
+                notifBadge.classList.add("hidden");
+            }
+
+        } catch (e) {
+            contenedorLista.innerHTML = `<div style="text-align: center; color: #ef4444; padding: 10px; font-size: 0.78rem;">Error al cargar notificaciones.</div>`;
+        }
     }
+
+    // Ejecutar al cargar la página
+    cargarNotificacionesJustificaciones();
 
     document.getElementById("btnCerrarSesion").addEventListener("click", () => {
-        if (geoWatchId !== null) navigator.geolocation.clearWatch(geoWatchId);
-        window.location.reload();
+        localStorage.removeItem("usuarioLogueado");
+        window.location.href = "index.html";
     });
-
-    function obtenerUbicacionRealTime() {
-        const statusGeo = document.getElementById("statusGeo");
-        const selectTipo = document.getElementById("tipoMarcacion");
-        const btnMarcar = document.getElementById("btnMarcar");
-
-        if (!navigator.geolocation) return statusGeo.innerHTML = "GPS no disponible.";
-
-        geoWatchId = navigator.geolocation.watchPosition(
-            (pos) => {
-                latitudDispositivo = pos.coords.latitude;
-                longitudDispositivo = pos.coords.longitude;
-                distanciaActual = Math.round(calcularDistancia(latitudDispositivo, longitudDispositivo, LAT_REF, LON_REF));
-
-                if (distanciaActual <= DISTANCIA_MAXIMA) {
-                    statusGeo.className = "gps-pill ok";
-                    statusGeo.innerHTML = `📍 En rango permitido (${distanciaActual} m)`;
-                    selectTipo.disabled = false;
-                    btnMarcar.disabled = false;
-                } else {
-                    statusGeo.className = "gps-pill bad";
-                    statusGeo.innerHTML = `⚠️ Fuera de rango (${distanciaActual} m). Máximo: ${DISTANCIA_MAXIMA} m.`;
-                    selectTipo.disabled = true;
-                    btnMarcar.disabled = true;
-                }
-            },
-            () => { statusGeo.className = "gps-pill bad"; statusGeo.innerHTML = "⚠️ GPS Desactivado."; },
-            { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
-        );
-    }
-
-    function calcularDistancia(lat1, lon1, lat2, lon2) {
-        const R = 6371e3;
-        const φ1 = lat1 * Math.PI / 180, φ2 = lat2 * Math.PI / 180;
-        const Δφ = (lat2 - lat1) * Math.PI / 180, Δλ = (lon2 - lon1) * Math.PI / 180;
-        const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    }
-
-    function evaluarHorario(tipo) {
-        const ahora = new Date();
-        const minActuales = ahora.getHours() * 60 + ahora.getMinutes();
-        const fechaHoy = ahora.toLocaleDateString("es-PE");
-
-        let estado = "Puntual", obs = "";
-        if (tipo === "Hora de entrada" && minActuales > 480) { estado = "Impuntual"; obs = `Tardanza de ${minActuales - 480} min.`; }
-        else if (tipo === "Hora de salida a almuerzo" && minActuales < 690) { estado = "Descuidado"; obs = "Salida anticipada."; }
-        else if (tipo === "Hora de regreso de almuerzo" && minActuales > 750) { estado = "Impuntual"; obs = "Exceso tiempo almuerzo."; }
-        else if (tipo === "Hora de salida" && minActuales < 1020) { estado = "Descuidado"; obs = "Salida anticipada."; }
-
-        return { estado, observaciones: obs, minutosHora: minActuales, fechaHoy };
-    }
-
-    document.getElementById("marcacionForm").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const tipo = document.getElementById("tipoMarcacion").value;
-        const alertMarcacion = document.getElementById("alertMarcacion");
-        const btnMarcar = document.getElementById("btnMarcar");
-
-        btnMarcar.disabled = true;
-
-        try {
-            const fechaActual = new Date();
-            const evaluacion = evaluarHorario(tipo);
-
-            const docRef = await addDoc(collection(db, "registros"), {
-                usuario: usuarioActual.usuario,
-                nombre: usuarioActual.nombre || usuarioActual.usuario,
-                tipo: tipo,
-                distanciaMetros: distanciaActual,
-                latitud: latitudDispositivo,
-                longitud: longitudDispositivo,
-                fechaHora: fechaActual.toLocaleString("es-PE"),
-                estadoPuntualidad: evaluacion.estado,
-                observaciones: evaluacion.observaciones,
-                minutosHora: evaluacion.minutosHora,
-                fechaHoy: evaluacion.fechaHoy,
-                creado: serverTimestamp()
-            });
-
-            ultimoRegistroId = docRef.id;
-            mostrarAlerta(alertMarcacion, `Registrado con éxito: (${evaluacion.estado})`, "success");
-
-            if (evaluacion.estado === "Impuntual" || evaluacion.estado === "Descuidado") {
-                document.getElementById("boxJustificar").classList.remove("hidden");
-            } else {
-                document.getElementById("boxJustificar").classList.add("hidden");
-            }
-        } catch (err) {
-            mostrarAlerta(alertMarcacion, "Error: " + err.message, "error");
-        } finally {
-            if (distanciaActual <= DISTANCIA_MAXIMA) btnMarcar.disabled = false;
-        }
-    });
-
-    document.getElementById("btnEnviarJustificacion").addEventListener("click", async () => {
-        const texto = document.getElementById("txtJustificacion").value.trim();
-        const alertMarcacion = document.getElementById("alertMarcacion");
-        const btnEnviar = document.getElementById("btnEnviarJustificacion");
-
-        if (!texto || !ultimoRegistroId) {
-            alert("Por favor ingresa un motivo.");
-            return;
-        }
-
-        try {
-            btnEnviar.disabled = true;
-            btnEnviar.textContent = "Enviando...";
-
-            await updateDoc(doc(db, "registros", ultimoRegistroId), {
-                justificacion: texto,
-                estadoPuntualidad: "Apelado / Justificado",
-                estadoJustificacion: "Pendiente"
-            });
-
-            mostrarAlerta(alertMarcacion, "Justificación enviada con éxito.", "success");
-            document.getElementById("boxJustificar").classList.add("hidden");
-            document.getElementById("txtJustificacion").value = "";
-        } catch (e) {
-            mostrarAlerta(alertMarcacion, "Error al enviar: " + e.message, "error");
-        } finally {
-            btnEnviar.disabled = false;
-            btnEnviar.textContent = "Enviar Motivo";
-        }
-    });
-
-    function mostrarAlerta(elem, msg, tipo) {
-        elem.textContent = msg;
-        elem.className = `alert-msg ${tipo}`;
-        elem.classList.remove("hidden");
-    }
 </script>
 </body>
 </html>
