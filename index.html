@@ -99,6 +99,17 @@
                     <button class="btn-primary" id="btnEnviarJustificacion" type="button" style="background: var(--status-warning); box-shadow: none; margin-top: 12px;">Enviar Motivo</button>
                 </div>
 
+                <!-- BOTÓN PARA VER HISTORIAL / ESTATUS -->
+                <button class="btn-primary" id="btnToggleHistorial" type="button" style="background: var(--border-color); color: var(--text-color); box-shadow: none; margin-top: 14px;">📊 Ver estatus de mis registros</button>
+
+                <!-- APARTADO / CONTENEDOR DE HISTORIAL -->
+                <div id="boxHistorial" class="hidden" style="margin-top: 14px; border-top: 1px dashed var(--border-color); padding-top: 14px; max-height: 250px; overflow-y: auto;">
+                    <label style="font-size: 0.75rem; font-weight: 800; display: block; margin-bottom: 8px;">📋 TUS ÚLTIMOS REGISTROS</label>
+                    <div id="listaHistorial" style="display: flex; flex-direction: column; gap: 8px; font-size: 0.8rem;">
+                        <span style="color: var(--text-muted); text-align: center;">Cargando registros...</span>
+                    </div>
+                </div>
+
                 <button class="btn-danger-link" id="btnCerrarSesion" type="button">Cerrar Sesión</button>
             </div>
 
@@ -135,7 +146,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, collection, serverTimestamp } 
+    import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, collection, serverTimestamp, query, where, getDocs, orderBy } 
         from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -353,6 +364,64 @@
         } finally {
             btnEnviar.disabled = false;
             btnEnviar.textContent = "Enviar Motivo";
+        }
+    });
+
+    // LÓGICA PARA MOSTRAR / OCULTAR Y CARGAR EL HISTORIAL DEL PRACTICANTE
+    document.getElementById("btnToggleHistorial").addEventListener("click", async () => {
+        const boxHistorial = document.getElementById("boxHistorial");
+        const listaHistorial = document.getElementById("listaHistorial");
+
+        // Alternar visibilidad
+        boxHistorial.classList.toggle("hidden");
+
+        if (!boxHistorial.classList.contains("hidden")) {
+            listaHistorial.innerHTML = `<span style="color: var(--text-muted); text-align: center;">Cargando registros...</span>`;
+            try {
+                const q = query(collection(db, "registros"), where("usuario", "==", usuarioActual.usuario));
+                const querySnapshot = await getDocs(q);
+
+                if (querySnapshot.empty) {
+                    listaHistorial.innerHTML = `<span style="color: var(--text-muted); text-align: center;">No tienes registros aún.</span>`;
+                    return;
+                }
+
+                let html = "";
+                querySnapshot.forEach((docSnap) => {
+                    const r = docSnap.data();
+                    
+                    // Definir color o texto según el estado de la justificación/puntualidad
+                    let badgeColor = "var(--status-ok)";
+                    let textoEstado = r.estadoPuntualidad;
+
+                    if (r.estadoPuntualidad === "Impuntual" || r.estadoPuntualidad === "Descuidado") {
+                        badgeColor = "var(--status-warning)";
+                    } else if (r.estadoJustificacion === "Aceptado") {
+                        badgeColor = "var(--status-ok)";
+                        textoEstado = "Justificación Aceptada ✓";
+                    } else if (r.estadoJustificacion === "Rechazado") {
+                        badgeColor = "var(--status-bad, #e74c3c)";
+                        textoEstado = "Justificación Rechazada ✕";
+                    } else if (r.estadoJustificacion === "Pendiente") {
+                        badgeColor = "var(--status-warning)";
+                        textoEstado = "Justificación en Revisión ⏳";
+                    }
+
+                    html += `
+                        <div style="background: var(--bg-input, rgba(0,0,0,0.03)); padding: 8px 10px; border-radius: 8px; border-left: 3px solid ${badgeColor};">
+                            <div style="display: flex; justify-content: space-between; font-weight: 700;">
+                                <span>${r.tipo}</span>
+                                <span style="font-size: 0.7rem; color: ${badgeColor};">${textoEstado}</span>
+                            </div>
+                            <div style="color: var(--text-muted); font-size: 0.75rem; margin-top: 2px;">${r.fechaHora}</div>
+                            ${r.justificacion ? `<div style="font-size: 0.75rem; margin-top: 4px; font-style: italic;">Motivo: "${r.justificacion}"</div>` : ''}
+                        </div>
+                    `;
+                });
+                listaHistorial.innerHTML = html;
+            } catch (err) {
+                listaHistorial.innerHTML = `<span style="color: red; text-align: center;">Error al cargar historial.</span>`;
+            }
         }
     });
 
