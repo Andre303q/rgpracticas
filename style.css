@@ -1,4 +1,5 @@
 :root {
+    /* MODO DIURNO (Por defecto) */
     --bg-color: #a5e1ff;
     --card-bg: #ffffff;
     --text-primary: #1e293b;
@@ -10,6 +11,45 @@
     --status-success: #10b981;
     --status-error: #ef4444;
     --status-warning: #f59e0b;
+    --pill-bg-info: #f0f9ff;
+    --pill-border-info: #bae6fd;
+    --badge-user-bg: #e0f2fe;
+}
+
+/* DETECCIÓN AUTOMÁTICA DEL MODO OSCURO DEL TELÉFONO */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-color: #0f172a;
+        --card-bg: #1e293b;
+        --text-primary: #f8fafc;
+        --text-secondary: #94a3b8;
+        --primary-blue: #0284c7;
+        --primary-hover: #0369a1;
+        --input-bg: #334155;
+        --border-color: #475569;
+        --pill-bg-info: #0369a120;
+        --pill-border-info: #0284c7;
+        --badge-user-bg: #0369a130;
+    }
+
+    /* Ajuste para tablas e insumos en la vista admin/registros en modo oscuro */
+    .custom-table th {
+        background: #0f172a !important;
+        color: var(--text-secondary) !important;
+    }
+
+    .filter-box {
+        background: #334155 !important;
+    }
+
+    .admin-tab {
+        background: #334155 !important;
+        color: var(--text-secondary) !important;
+    }
+    .admin-tab.active {
+        background: var(--primary-blue) !important;
+        color: #ffffff !important;
+    }
 }
 
 * {
@@ -17,7 +57,7 @@
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     margin: 0;
     padding: 0;
-    transition: all 0.2s ease;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
 body {
@@ -38,7 +78,7 @@ body {
     background: var(--card-bg);
     border-radius: 28px;
     padding: 36px 28px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
 }
 
 .brand-box {
@@ -81,7 +121,7 @@ body {
 /* NAVEGACIÓN TAB */
 .nav-tabs {
     display: flex;
-    background: #f1f5f9;
+    background: var(--input-bg);
     border-radius: 14px;
     padding: 4px;
     margin-bottom: 24px;
@@ -145,7 +185,6 @@ body {
 
 .input-icon-wrapper input:focus, .input-icon-wrapper select:focus, .input-icon-wrapper textarea:focus {
     border-color: var(--primary-blue);
-    background: #ffffff;
 }
 
 /* BOTONES */
@@ -168,8 +207,8 @@ body {
 
 .btn-danger-link {
     width: 100%;
-    background: #fef2f2;
-    border: 1px solid #fee2e2;
+    background: #fef2f215;
+    border: 1px solid #fee2e240;
     color: var(--status-error);
     padding: 12px;
     border-radius: 12px;
@@ -187,12 +226,12 @@ body {
     margin-bottom: 18px;
     text-align: center;
 }
-.gps-pill.ok { background: #ecfdf5; color: var(--status-success); border: 1px solid #a7f3d0; }
-.gps-pill.bad { background: #fef2f2; color: var(--status-error); border: 1px solid #fecaca; }
-.gps-pill.info { background: #f0f9ff; color: var(--primary-blue); border: 1px solid #bae6fd; }
+.gps-pill.ok { background: #ecfdf520; color: var(--status-success); border: 1px solid #a7f3d050; }
+.gps-pill.bad { background: #fef2f220; color: var(--status-error); border: 1px solid #fecaca50; }
+.gps-pill.info { background: var(--pill-bg-info); color: var(--primary-blue); border: 1px solid var(--pill-border-info); }
 
 .alert-msg { padding: 10px; border-radius: 10px; font-size: 0.8rem; margin-top: 12px; text-align: center; font-weight: 600; }
-.alert-msg.error { background: #fef2f2; color: var(--status-error); }
-.alert-msg.success { background: #ecfdf5; color: var(--status-success); }
+.alert-msg.error { background: #fef2f220; color: var(--status-error); }
+.alert-msg.success { background: #ecfdf520; color: var(--status-success); }
 
 .hidden { display: none !important; }
