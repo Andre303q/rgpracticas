@@ -381,4 +381,387 @@
     cargarRegistros();
 </script>
 </body>
+</html><!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Administrativo - RGPracticas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { 
+            display: block; 
+            padding: 30px 20px; 
+            background-color: var(--bg-color);
+        }
+        .admin-wrapper { 
+            max-width: 1100px; 
+            margin: 0 auto; 
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .top-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .filter-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #f1f5f9;
+            padding: 8px 14px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .filter-box input[type="date"] {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-family: inherit;
+            outline: none;
+            font-weight: 600;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+
+        .custom-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.85rem;
+        }
+
+        .custom-table th {
+            padding: 12px 14px;
+            background: #f8fafc;
+            color: var(--text-secondary);
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .custom-table td {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+            color: var(--text-primary);
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: inline-block;
+        }
+        .badge-Temprano, .badge-Puntual, .badge-Aprobada, .badge-Justificado { background: #ecfdf5; color: var(--status-success); border: 1px solid #a7f3d0; }
+        .badge-Impuntual, .badge-Rechazada { background: #fef2f2; color: var(--status-error); border: 1px solid #fecaca; }
+        .badge-Descuidado { background: #fffbeb; color: var(--status-warning); border: 1px solid #fde68a; }
+
+        .btn-sm {
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-approve { background: var(--status-success); color: #fff; }
+        .btn-reject { background: var(--status-warning); color: #fff; }
+        .btn-delete { background: #fef2f2; color: var(--status-error); border: 1px solid #fecaca; }
+        .btn-delete:hover { background: var(--status-error); color: #fff; }
+
+        .admin-nav {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .admin-tab {
+            padding: 8px 16px;
+            border: none;
+            background: #e2e8f0;
+            color: var(--text-secondary);
+            font-weight: 700;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .admin-tab.active {
+            background: var(--primary-blue);
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="admin-wrapper">
+        <!-- HEADER TOP -->
+        <div class="card top-header" style="padding: 20px 28px;">
+            <div style="display:flex; align-items:center; gap:14px;">
+                <div class="logo-diamond" style="width:44px; height:44px; margin:0;"><span style="font-size:0.9rem;">RG</span></div>
+                <div>
+                    <h2 style="margin:0; font-size:1.3rem; color:var(--text-primary);">Panel Administrativo</h2>
+                    <p style="margin:0; font-size:0.8rem; color:var(--text-secondary);">Gestión de asistencia y usuarios</p>
+                </div>
+            </div>
+
+            <button class="btn-danger-link" id="btnLogout" style="width:auto; margin:0; padding:10px 18px;">Cerrar Sesión</button>
+        </div>
+
+        <!-- BOTONES DE CAMBIO DE VISTA -->
+        <div class="admin-nav">
+            <button class="admin-tab active" id="tabVerRegistros" onclick="mostrarSeccion('registros')">📋 Marcaciones</button>
+            <button class="admin-tab" id="tabVerUsuarios" onclick="mostrarSeccion('usuarios')">👥 Usuarios Registrados</button>
+        </div>
+
+        <!-- SECCIÓN 1: TABLA DE REGISTROS -->
+        <div id="seccionRegistros" class="card" style="padding: 24px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:15px;">
+                <div class="section-title" style="margin:0;">🕒 Registro de Asistencias</div>
+                
+                <!-- FILTRADO POR FECHA -->
+                <div class="filter-box">
+                    <span style="font-size:0.75rem; font-weight:700; color:var(--text-secondary);">FILTRAR FECHA:</span>
+                    <input type="date" id="filtroFecha">
+                    <button class="btn-sm btn-delete" id="btnLimpiarFiltro" style="padding:6px 10px;">Todos</button>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>Practicante</th>
+                            <th>Tipo Marcación</th>
+                            <th>Fecha y Hora</th>
+                            <th>Distancia</th>
+                            <th>Puntualidad</th>
+                            <th>Justificación</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaRegistros">
+                        <tr><td colspan="7" style="text-align:center; padding:20px;">Cargando marcaciones...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 2: TABLA DE USUARIOS -->
+        <div id="seccionUsuarios" class="card hidden" style="padding: 24px;">
+            <div class="section-title">👥 Usuarios Registrados en la App</div>
+            
+            <div class="table-container">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>Usuario ID</th>
+                            <th>Nombre Completo</th>
+                            <th>Rol</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaUsuarios">
+                        <tr><td colspan="4" style="text-align:center; padding:20px;">Cargando usuarios...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, updateDoc, deleteDoc, doc, query, orderBy } 
+        from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyB6KT4Gw-O4NDhsAREAeAdAmrIuMH53ZyQ",
+        authDomain: "rgpracticantes-da4bc.firebaseapp.com",
+        projectId: "rgpracticantes-da4bc",
+        storageBucket: "rgpracticantes-da4bc.firebasestorage.app",
+        messagingSenderId: "378103051147",
+        appId: "1:378103051147:web:0c30387cc661d75e0ff58e"
+    };
+
+    const db = getFirestore(initializeApp(firebaseConfig));
+    let memoriaRegistros = [];
+
+    document.getElementById("btnLogout").addEventListener("click", () => window.location.href = "index.html");
+
+    // NAVEGACIÓN ENTRE TABLAS
+    window.mostrarSeccion = function(seccion) {
+        if (seccion === 'registros') {
+            document.getElementById("seccionRegistros").classList.remove("hidden");
+            document.getElementById("seccionUsuarios").classList.add("hidden");
+            document.getElementById("tabVerRegistros").classList.add("active");
+            document.getElementById("tabVerUsuarios").classList.remove("active");
+        } else {
+            document.getElementById("seccionRegistros").classList.add("hidden");
+            document.getElementById("seccionUsuarios").classList.remove("hidden");
+            document.getElementById("tabVerRegistros").classList.remove("active");
+            document.getElementById("tabVerUsuarios").classList.add("active");
+            cargarUsuarios();
+        }
+    };
+
+    // 1. CARGAR Y RENDERIZAR MARCACIONES
+    async function cargarRegistros() {
+        const tbody = document.getElementById("tablaRegistros");
+        try {
+            const q = query(collection(db, "registros"), orderBy("creado", "desc"));
+            const snap = await getDocs(q);
+            memoriaRegistros = [];
+
+            snap.forEach((docSnap) => {
+                memoriaRegistros.push({ id: docSnap.id, ...docSnap.data() });
+            });
+
+            renderizarRegistros(memoriaRegistros);
+        } catch (e) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--status-error);">Error: ${e.message}</td></tr>`;
+        }
+    }
+
+    function renderizarRegistros(lista) {
+        const tbody = document.getElementById("tablaRegistros");
+        tbody.innerHTML = "";
+
+        if (lista.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px;">No hay marcaciones para mostrar.</td></tr>`;
+            return;
+        }
+
+        lista.forEach((reg) => {
+            const tr = document.createElement("tr");
+
+            let justHtml = "-";
+            if (reg.justificacion) {
+                justHtml = `<i>"${reg.justificacion}"</i><br><small style="color:var(--text-secondary)">Estado: <b>${reg.estadoJustificacion || 'Pendiente'}</b></small>`;
+            }
+
+            let accionesHtml = "";
+            if (reg.justificacion && reg.estadoJustificacion === "Pendiente") {
+                accionesHtml += `
+                    <button class="btn-sm btn-approve" onclick="responderJustificacion('${reg.id}', 'Aprobada')">Aprobar</button>
+                    <button class="btn-sm btn-reject" onclick="responderJustificacion('${reg.id}', 'Rechazada')">Rechazar</button>
+                `;
+            }
+            accionesHtml += `<button class="btn-sm btn-delete" onclick="eliminarRegistro('${reg.id}')" title="Eliminar registro">🗑️ Eliminar</button>`;
+
+            tr.innerHTML = `
+                <td><b>${reg.nombre || reg.usuario}</b></td>
+                <td>${reg.tipo}</td>
+                <td>${reg.fechaHora}</td>
+                <td>${reg.distanciaMetros} m</td>
+                <td><span class="badge badge-${reg.estadoPuntualidad}">${reg.estadoPuntualidad}</span></td>
+                <td>${justHtml}</td>
+                <td>${accionesHtml}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // FILTRO DE FECHAS
+    document.getElementById("filtroFecha").addEventListener("change", (e) => {
+        const val = e.target.value; 
+        if (!val) return renderizarRegistros(memoriaRegistros);
+
+        const [yyyy, mm, dd] = val.split("-");
+        const fechaTarget = `${parseInt(dd)}/${parseInt(mm)}/${yyyy}`;
+
+        const filtrados = memoriaRegistros.filter(r => 
+            r.fechaHoy === fechaTarget || (r.fechaHora && r.fechaHora.includes(fechaTarget))
+        );
+        renderizarRegistros(filtrados);
+    });
+
+    document.getElementById("btnLimpiarFiltro").addEventListener("click", () => {
+        document.getElementById("filtroFecha").value = "";
+        renderizarRegistros(memoriaRegistros);
+    });
+
+    // ACCIONES DE REGISTRO
+    window.responderJustificacion = async function(id, estado) {
+        const estadoPunt = estado === "Aprobada" ? "Justificado" : "Rechazado";
+        await updateDoc(doc(db, "registros", id), {
+            estadoJustificacion: estado,
+            estadoPuntualidad: estadoPunt
+        });
+        cargarRegistros();
+    };
+
+    window.eliminarRegistro = async function(id) {
+        if (confirm("¿Estás seguro de eliminar este registro de marcación?")) {
+            await deleteDoc(doc(db, "registros", id));
+            cargarRegistros();
+        }
+    };
+
+    // 2. CARGAR Y GESTIONAR USUARIOS
+    async function cargarUsuarios() {
+        const tbody = document.getElementById("tablaUsuarios");
+        try {
+            const snap = await getDocs(collection(db, "usuarios"));
+            tbody.innerHTML = "";
+
+            if (snap.empty) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px;">No hay usuarios registrados.</td></tr>`;
+                return;
+            }
+
+            snap.forEach((docSnap) => {
+                const u = docSnap.data();
+                const userId = docSnap.id;
+                const tr = document.createElement("tr");
+
+                let btnEliminarUser = userId === "admin" 
+                    ? `<small style="color:var(--text-secondary)">Acceso Maestro</small>` 
+                    : `<button class="btn-sm btn-delete" onclick="eliminarUsuario('${userId}')">🗑️ Eliminar Usuario</button>`;
+
+                tr.innerHTML = `
+                    <td><b>${userId}</b></td>
+                    <td>${u.nombre || '-'}</td>
+                    <td><span class="badge" style="background:#e0f2fe; color:var(--primary-blue);">${u.rol || 'practicante'}</span></td>
+                    <td>${btnEliminarUser}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } catch (e) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--status-error);">Error: ${e.message}</td></tr>`;
+        }
+    }
+
+    window.eliminarUsuario = async function(userId) {
+        if (confirm(`¿Confirmas que deseas eliminar al usuario "${userId}"? No podrá volver a ingresar.`)) {
+            await deleteDoc(doc(db, "usuarios", userId));
+            cargarUsuarios();
+        }
+    };
+
+    cargarRegistros();
+</script>
+</body>
 </html>
