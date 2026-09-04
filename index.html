@@ -10,8 +10,10 @@
 <body>
 
     <div class="app-wrapper">
+        <!-- BOTÓN CAMBIO DE TEMA -->
+        <button class="theme-toggle-btn" id="btnThemeToggle" title="Cambiar Tema">🌙</button>
+
         <div class="card">
-            
             <div class="brand-box">
                 <div class="logo-diamond"><span>RG</span></div>
                 <h1>RGPracticas</h1>
@@ -96,6 +98,27 @@
 
         </div>
     </div>
+
+<script>
+    // CONTROL DEL MODO OSCURO / DIURNO EN JS
+    const btnToggle = document.getElementById("btnThemeToggle");
+    const temaGuardado = localStorage.getItem("tema_app");
+    const prefiereOscuro = window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+    if (temaGuardado === "dark" || (!temaGuardado && prefiereOscuro)) {
+        document.body.classList.add("dark-mode");
+        btnToggle.textContent = "☀️";
+    } else {
+        btnToggle.textContent = "🌙";
+    }
+
+    btnToggle.addEventListener("click", () => {
+        document.body.classList.toggle("dark-mode");
+        const esOscuro = document.body.classList.contains("dark-mode");
+        btnToggle.textContent = esOscuro ? "☀️" : "🌙";
+        localStorage.setItem("tema_app", esOscuro ? "dark" : "light");
+    });
+</script>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
