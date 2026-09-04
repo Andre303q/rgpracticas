@@ -267,7 +267,7 @@
 <!-- SCRIPT FIREBASE Y DATOS -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, query, orderBy, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, query, orderBy, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyB6KT4Gw-O4NDhsAREAeAdAmrIuMH53ZyQ",
@@ -362,9 +362,6 @@
                     <td>${textoObservacion}</td>
                     <td>
                         <div class="action-buttons">
-                            <button type="button" onclick="editarJustificacion('${r.idFirebase}', '${encodeURIComponent(r.justificacion || r.observaciones || '')}')" title="Editar Justificación" style="background-color: #3b82f6; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.75rem; font-weight: 700;">
-                                ✏️
-                            </button>
                             <button type="button" onclick="eliminarRegistro('${r.idFirebase}')" title="Eliminar Registro" style="background-color: #ef4444; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.75rem; font-weight: 700;">
                                 🗑️
                             </button>
@@ -374,26 +371,6 @@
             `;
         });
         cuerpoTablaReg.innerHTML = html;
-    }
-
-    // Función para editar o agregar justificación / observaciones desde admin
-    window.editarJustificacion = async function(idFirebase, observacionesActuales) {
-        const actualDecodificado = decodeURIComponent(observacionesActuales === 'undefined' ? '' : observacionesActuales);
-        const nuevaObservacion = prompt("Ingrese la justificación o corrección de la observación:", actualDecodificado);
-        
-        if (nuevaObservacion === null) return; 
-
-        try {
-            const docRef = doc(db, "registros", idFirebase);
-            await updateDoc(docRef, {
-                justificacion: nuevaObservacion.trim() || '-'
-            });
-            alert("Observación / Justificación actualizada correctamente.");
-            cargarDatosAdmin();
-        } catch (error) {
-            console.error("Error al actualizar:", error);
-            alert("No se pudo actualizar: " + error.message);
-        }
     }
 
     // Función global para eliminar registros desde la web
