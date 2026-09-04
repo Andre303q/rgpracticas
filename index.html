@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RGPracticas - Asistencia</title>
+    <title>RGPracticas</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2563eb">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -11,48 +11,54 @@
 </head>
 <body>
 
-    <div class="main-container">
-        <div class="app-card">
-            
-            <div class="logo-badge">RG</div>
-            <h1 class="title">RGPracticas</h1>
-            <p class="subtitle" id="subtituloCard">Acceso de Personal</p>
+    <div class="app-viewport">
+        
+        <!-- HEADER PRINCIPAL -->
+        <header class="brand-header">
+            <div class="brand-logo">RG</div>
+            <div class="brand-info">
+                <h1>RGPracticas</h1>
+                <p id="subtituloHeader">Portal de Asistencia</p>
+            </div>
+        </header>
 
-            <div class="auth-tabs" id="tabsAuth">
-                <button class="tab-btn active" id="tabLogin" onclick="cambiarModo('login')">Ingresar</button>
-                <button class="tab-btn" id="tabRegister" onclick="cambiarModo('registro')">Registro</button>
+        <!-- SECCIÓN DE AUTENTICACIÓN -->
+        <main id="seccionAuth" class="bento-card">
+            <div class="tab-switcher">
+                <button class="tab-btn active" id="tabLogin" onclick="cambiarTab('login')">Ingresar</button>
+                <button class="tab-btn" id="tabRegister" onclick="cambiarTab('registro')">Registro</button>
             </div>
 
-            <!-- FORMULARIO AUTENTICACIÓN -->
             <form id="authForm">
-                <div class="input-field" id="groupNombre" style="display: none;">
+                <div class="field-group hidden" id="groupNombre">
                     <label for="txtNombre">Nombre Completo</label>
-                    <input type="text" id="txtNombre" placeholder="Ej. Juan Pérez">
+                    <input type="text" id="txtNombre" placeholder="Ej. Carlos López">
                 </div>
 
-                <div class="input-field">
+                <div class="field-group">
                     <label for="txtUsuario">Usuario</label>
-                    <input type="text" id="txtUsuario" placeholder="Ej. juan123" required autocomplete="off">
+                    <input type="text" id="txtUsuario" placeholder="Ej. carlos123" required autocomplete="off">
                 </div>
 
-                <div class="input-field">
+                <div class="field-group">
                     <label for="txtPassword">Contraseña</label>
                     <input type="password" id="txtPassword" placeholder="••••••••" required>
                 </div>
 
-                <button type="submit" class="btn-primary" id="btnSubmit">Iniciar Sesión</button>
-
-                <div id="alertAuth" class="alert-popup" style="display: none;"></div>
+                <button type="submit" class="btn btn-primary" id="btnAuth">Iniciar Sesión</button>
+                <div id="alertAuth" class="alert hidden"></div>
             </form>
+        </main>
 
-            <!-- VISTA DE MARCACIÓN -->
-            <div id="vistaMarcacion" class="hidden">
-                <div class="status-box info" id="statusGeo">
-                    📍 Obteniendo GPS... Por favor espera.
-                </div>
+        <!-- SECCIÓN DE MARCACIÓN -->
+        <main id="seccionMarcacion" class="hidden">
+            <div id="statusGeo" class="status-pill info">
+                📡 Obteniendo posición GPS...
+            </div>
 
+            <div class="bento-card">
                 <form id="marcacionForm">
-                    <div class="input-field">
+                    <div class="field-group">
                         <label for="tipoMarcacion">Tipo de Registro</label>
                         <select id="tipoMarcacion" disabled>
                             <option value="Hora de entrada">Hora de entrada</option>
@@ -62,24 +68,24 @@
                         </select>
                     </div>
 
-                    <button type="submit" class="btn-primary" id="btnMarcar" disabled>Registrar Marcación</button>
+                    <button type="submit" class="btn btn-primary" id="btnMarcar" disabled>Registrar Marcación</button>
                 </form>
 
-                <div id="alertMarcacion" class="alert-popup" style="display: none;"></div>
-                
-                <!-- BLOQUE JUSTIFICACIÓN -->
-                <div id="boxJustificar" class="hidden" style="margin-top:20px; background:rgba(217, 119, 6, 0.1); border:1px solid rgba(217, 119, 6, 0.3); padding:16px; border-radius:16px;">
-                    <label style="font-size:0.85rem; font-weight:800; color:var(--status-warning); display:block; margin-bottom:6px;">⚠️ Justificar Tardanza / Anticipo</label>
-                    <div class="input-field" style="margin-bottom:10px;">
-                        <textarea id="txtJustificacion" rows="3" placeholder="Explica el motivo aquí..."></textarea>
-                    </div>
-                    <button class="btn-primary" id="btnEnviarJustificacion" style="background:var(--status-warning); box-shadow:none;">Enviar Motivo</button>
-                </div>
+                <div id="alertMarcacion" class="alert hidden"></div>
 
-                <button class="btn-primary btn-danger" id="btnCerrarSesion">Cerrar Sesión</button>
+                <!-- FORMULARIO DE JUSTIFICACIÓN -->
+                <div id="boxJustificar" class="hidden" style="margin-top: 16px; border-top: 1px dashed var(--border); padding-top: 16px;">
+                    <div class="field-group">
+                        <label style="color: var(--warning);">⚠️ Justificar Tardanza / Salida</label>
+                        <textarea id="txtJustificacion" rows="3" placeholder="Escribe el motivo del retraso o salida anticipada..."></textarea>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="btnEnviarJustificacion" style="background: var(--warning); box-shadow: none;">Enviar Justificación</button>
+                </div>
             </div>
 
-        </div>
+            <button type="button" class="btn btn-danger-outline" id="btnCerrarSesion">Cerrar Sesión</button>
+        </main>
+
     </div>
 
 <script type="module">
@@ -106,21 +112,21 @@
     let distanciaActual = 0;
     let latitudDispositivo = null;
     let longitudDispositivo = null;
-    let modoActual = 'login';
+    let modoAuth = 'login';
     let geoWatchId = null;
     let ultimoRegistroId = null;
 
-    window.cambiarModo = function(modo) {
-        modoActual = modo;
-        document.getElementById("alertAuth").style.display = "none";
+    window.cambiarTab = function(modo) {
+        modoAuth = modo;
+        document.getElementById("alertAuth").classList.add("hidden");
         if (modo === 'registro') {
-            document.getElementById("groupNombre").style.display = "block";
-            document.getElementById("btnSubmit").textContent = "Crear Cuenta";
+            document.getElementById("groupNombre").classList.remove("hidden");
+            document.getElementById("btnAuth").textContent = "Crear Cuenta";
             document.getElementById("tabRegister").classList.add("active");
             document.getElementById("tabLogin").classList.remove("active");
         } else {
-            document.getElementById("groupNombre").style.display = "none";
-            document.getElementById("btnSubmit").textContent = "Iniciar Sesión";
+            document.getElementById("groupNombre").classList.add("hidden");
+            document.getElementById("btnAuth").textContent = "Iniciar Sesión";
             document.getElementById("tabLogin").classList.add("active");
             document.getElementById("tabRegister").classList.remove("active");
         }
@@ -142,7 +148,7 @@
             const userRef = doc(db, "usuarios", userInput);
             const userSnap = await getDoc(userRef);
 
-            if (modoActual === 'registro') {
+            if (modoAuth === 'registro') {
                 if (userSnap.exists()) return mostrarAlerta(alertAuth, "El usuario ya existe.", "error");
                 if (!nombreInput) return mostrarAlerta(alertAuth, "Ingresa tu nombre.", "error");
 
@@ -151,7 +157,7 @@
                 usuarioActual = nuevo;
                 iniciarPanelPracticante();
             } else {
-                if (!userSnap.exists()) return mostrarAlerta(alertAuth, "Usuario no existe.", "error");
+                if (!userSnap.exists()) return mostrarAlerta(alertAuth, "Usuario no encontrado.", "error");
                 const data = userSnap.data();
                 if (data.password !== passInput) return mostrarAlerta(alertAuth, "Contraseña incorrecta.", "error");
 
@@ -168,10 +174,9 @@
     });
 
     function iniciarPanelPracticante() {
-        document.getElementById("authForm").classList.add("hidden");
-        document.getElementById("tabsAuth").classList.add("hidden");
-        document.getElementById("subtituloCard").textContent = "Hola, " + (usuarioActual.nombre || usuarioActual.usuario);
-        document.getElementById("vistaMarcacion").classList.remove("hidden");
+        document.getElementById("seccionAuth").classList.add("hidden");
+        document.getElementById("subtituloHeader").textContent = "Hola, " + (usuarioActual.nombre || usuarioActual.usuario);
+        document.getElementById("seccionMarcacion").classList.remove("hidden");
         obtenerUbicacionRealTime();
     }
 
@@ -185,7 +190,11 @@
         const selectTipo = document.getElementById("tipoMarcacion");
         const btnMarcar = document.getElementById("btnMarcar");
 
-        if (!navigator.geolocation) return statusGeo.innerHTML = "GPS no disponible.";
+        if (!navigator.geolocation) {
+            statusGeo.className = "status-pill error";
+            statusGeo.innerHTML = "❌ GPS no soportado en este dispositivo.";
+            return;
+        }
 
         geoWatchId = navigator.geolocation.watchPosition(
             (pos) => {
@@ -194,18 +203,21 @@
                 distanciaActual = Math.round(calcularDistancia(latitudDispositivo, longitudDispositivo, LAT_REF, LON_REF));
 
                 if (distanciaActual <= DISTANCIA_MAXIMA) {
-                    statusGeo.className = "status-box success";
-                    statusGeo.innerHTML = `📍 En rango válido (${distanciaActual} m)`;
+                    statusGeo.className = "status-pill success";
+                    statusGeo.innerHTML = `📍 Ubicación válida (${distanciaActual}m de la sede)`;
                     selectTipo.disabled = false;
                     btnMarcar.disabled = false;
                 } else {
-                    statusGeo.className = "status-box error";
-                    statusGeo.innerHTML = `⚠️ Fuera de rango (${distanciaActual} m). Máximo: ${DISTANCIA_MAXIMA} m.`;
+                    statusGeo.className = "status-pill error";
+                    statusGeo.innerHTML = `⚠️ Fuera de rango (${distanciaActual}m). Máx: ${DISTANCIA_MAXIMA}m.`;
                     selectTipo.disabled = true;
                     btnMarcar.disabled = true;
                 }
             },
-            () => { statusGeo.className = "status-box error"; statusGeo.innerHTML = "⚠️ GPS Desactivado."; },
+            () => { 
+                statusGeo.className = "status-pill error"; 
+                statusGeo.innerHTML = "⚠️ Activa la ubicación (GPS) para marcar."; 
+            },
             { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
         );
     }
@@ -218,7 +230,7 @@
         return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
 
-    async function evaluarHorario(tipo) {
+    function evaluarHorario(tipo) {
         const ahora = new Date();
         const minActuales = ahora.getHours() * 60 + ahora.getMinutes();
         const fechaHoy = ahora.toLocaleDateString("es-PE");
@@ -231,7 +243,7 @@
         } else if (tipo === "Hora de salida a almuerzo") {
             if (minActuales < 690) { estado = "Descuidado"; obs = "Salida anticipada."; }
         } else if (tipo === "Hora de regreso de almuerzo") {
-            if (minActuales > 750) { estado = "Impuntual"; obs = "Exceso en tiempo de almuerzo."; }
+            if (minActuales > 750) { estado = "Impuntual"; obs = "Exceso tiempo almuerzo."; }
         } else if (tipo === "Hora de salida") {
             if (minActuales < 1020) { estado = "Descuidado"; obs = "Salida anticipada."; }
         }
@@ -255,11 +267,11 @@
             const snapshotLimite = await getDocs(qLimite);
 
             if (snapshotLimite.size >= 5) {
-                mostrarAlerta(alertMarcacion, "⚠️ Límite máximo de 5 marcaciones diarias alcanzado.", "error");
+                mostrarAlerta(alertMarcacion, "⚠️ Límite de 5 marcaciones diarias alcanzado.", "error");
                 return;
             }
 
-            const evaluacion = await evaluarHorario(tipo);
+            const evaluacion = evaluarHorario(tipo);
 
             const docRef = await addDoc(collection(db, "registros"), {
                 usuario: usuarioActual.usuario,
@@ -277,7 +289,7 @@
             });
 
             ultimoRegistroId = docRef.id;
-            mostrarAlerta(alertMarcacion, `Registrado con éxito: (${evaluacion.estado})`, "success");
+            mostrarAlerta(alertMarcacion, `Marcación realizada: (${evaluacion.estado})`, "success");
 
             if (evaluacion.estado === "Impuntual" || evaluacion.estado === "Descuidado") {
                 document.getElementById("boxJustificar").classList.remove("hidden");
@@ -312,8 +324,8 @@
 
     function mostrarAlerta(elem, msg, tipo) {
         elem.textContent = msg;
-        elem.className = `alert-popup alert-${tipo}`;
-        elem.style.display = "block";
+        elem.className = `alert alert-${tipo}`;
+        elem.classList.remove("hidden");
     }
 </script>
 </body>
