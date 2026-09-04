@@ -106,7 +106,7 @@
                 <button class="btn-danger-link" id="btnCerrarSesionAdmin" style="width: auto; padding: 10px 20px; margin: 0;">Cerrar Sesión</button>
             </div>
 
-            <!-- PESTAÑAS DE NAVEGACIÓN (Marcaciones / Usuarios) -->
+            <!-- PESTAÑAS DE NAVEGACIÓN -->
             <div class="nav-tabs" id="tabsAdmin" style="margin-bottom: 20px;">
                 <button class="tab-link active" id="tabMarcaciones" type="button" onclick="cambiarVistaAdmin('marcaciones')">Marcaciones</button>
                 <button class="tab-link" id="tabUsuarios" type="button" onclick="cambiarVistaAdmin('usuarios')">Usuarios Registrados</button>
@@ -173,7 +173,7 @@
         </div>
     </div>
 
-<!-- SCRIPT DE TEMA (Claro / Oscuro) -->
+<!-- SCRIPT DE TEMA (Claro / Oscuro) Y PESTAÑAS -->
 <script>
     const btnToggle = document.getElementById("btnThemeToggle");
     const themeIcon = document.getElementById("themeIcon");
@@ -206,7 +206,6 @@
         window.location.href = "index.html";
     });
 
-    // Control de pestañas del panel
     function cambiarVistaAdmin(vista) {
         const secMarcaciones = document.getElementById("seccionMarcaciones");
         const secUsuarios = document.getElementById("seccionUsuarios");
@@ -296,13 +295,26 @@
 
         let html = "";
         datos.forEach((r) => {
+            const estado = (r.estadoPuntualidad || "").toLowerCase();
+            
+            // Colores dinámicos según el estado de puntualidad
+            let estiloBadge = "background: #f1f5f9; color: #64748b;"; // Por defecto (gris)
+            
+            if (estado.includes("puntual") || estado.includes("temprano")) {
+                estiloBadge = "background: #ecfdf5; color: #10b981; border: 1px solid #a7f3d0;"; // Verde
+            } else if (estado.includes("tarde") || estado.includes("impuntual") || estado.includes("retraso")) {
+                estiloBadge = "background: #fef2f2; color: #ef4444; border: 1px solid #fecaca;"; // Rojo
+            } else if (estado.includes("permiso") || estado.includes("justificado")) {
+                estiloBadge = "background: #fef3c7; color: #f59e0b; border: 1px solid #fde68a;"; // Amarillo/Ámbar
+            }
+
             html += `
                 <tr>
                     <td><strong>${r.nombre || r.usuario}</strong></td>
                     <td>${r.tipo}</td>
                     <td>${r.fechaHora}</td>
                     <td>${r.distanciaMetros} m</td>
-                    <td><span style="padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; background: #ecfdf5; color: #10b981;">${r.estadoPuntualidad}</span></td>
+                    <td><span style="padding: 5px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; display: inline-block; ${estiloBadge}">${r.estadoPuntualidad || 'Registrado'}</span></td>
                     <td>${r.observaciones || '-'}</td>
                 </tr>
             `;
@@ -314,7 +326,6 @@
         const inputVal = document.getElementById("inputFiltroFecha").value; // Formato YYYY-MM-DD
         if (!inputVal) return;
 
-        // Convertir YYYY-MM-DD a DD/MM/YYYY para que coincida con fechaHoy ("4/9/2026" o similar)
         const partes = inputVal.split("-");
         const fechaFiltradaFormat = `${parseInt(partes[2])}/${parseInt(partes[1])}/${partes[0]}`;
 
