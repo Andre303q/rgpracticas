@@ -11,7 +11,6 @@
 
     <div class="app-wrapper">
         <div class="card">
-            <!-- BOTÓN CAMBIO DE TEMA DENTRO DEL CONTAINER -->
             <div class="theme-switch-container">
                 <button class="theme-toggle-btn" id="btnThemeToggle" type="button">
                     <span id="themeIcon">🌙</span> <span id="themeText">Oscuro</span>
@@ -24,13 +23,11 @@
                 <p id="subtituloCard">Portal de Asistencia</p>
             </div>
 
-            <!-- NAVEGACIÓN INGRESAR / REGISTRO -->
             <div class="nav-tabs" id="tabsAuth">
                 <button class="tab-link active" id="tabLogin" type="button" onclick="cambiarModo('login')">Ingresar</button>
                 <button class="tab-link" id="tabRegister" type="button" onclick="cambiarModo('registro')">Registro</button>
             </div>
 
-            <!-- FORMULARIO -->
             <form id="authForm">
                 <div class="input-block hidden" id="groupNombre">
                     <label>Nombre Completo</label>
@@ -60,7 +57,6 @@
                 <div id="alertAuth" class="alert-msg hidden"></div>
             </form>
 
-            <!-- VISTA MARCACIÓN -->
             <div id="vistaMarcacion" class="hidden">
                 <div class="gps-pill info" id="statusGeo">
                     📡 Obteniendo ubicación GPS...
@@ -83,18 +79,26 @@
                     <button type="submit" class="btn-primary" id="btnMarcar" disabled>Registrar Marcación</button>
                 </form>
 
+                <button type="button" id="btnNoPresento" class="btn-primary" style="background-color: #ef4444; margin-top: 10px; box-shadow: none;">⚠️ Marcar "No me presenté hoy"</button>
+
                 <div id="alertMarcacion" class="alert-msg hidden"></div>
 
-                <!-- BLOQUE DE JUSTIFICACIÓN -->
                 <div id="boxJustificar" class="hidden" style="margin-top: 18px; border-top: 1px dashed var(--border-color); padding-top: 16px;">
-                    <label style="font-size: 0.75rem; font-weight: 800; color: var(--status-warning); display: block; margin-bottom: 6px;">⚠️ JUSTIFICAR IMPUNTUALIDAD / SALIDA</label>
+                    <label style="font-size: 0.75rem; font-weight: 800; color: var(--status-warning); display: block; margin-bottom: 6px;">⚠️ JUSTIFICAR / APELAR (O COMPROBANTE MÉDICO)</label>
+                    
                     <div class="input-block">
                         <div class="input-icon-wrapper">
                             <span class="icon" style="top: 12px;">📝</span>
-                            <textarea id="txtJustificacion" rows="3" placeholder="Describe la razón aquí..."></textarea>
+                            <textarea id="txtJustificacion" rows="3" placeholder="Describe la razón o apela tu estado..."></textarea>
                         </div>
                     </div>
-                    <button class="btn-primary" id="btnEnviarJustificacion" type="button" style="background: var(--status-warning); box-shadow: none;">Enviar Motivo</button>
+
+                    <div class="input-block" style="margin-top: 10px;">
+                        <label style="font-size: 0.75rem; color: var(--text-secondary);">Adjuntar Imagen / Comprobante (Opcional):</label>
+                        <input type="file" id="archivoComprobante" accept="image/*,.pdf" style="font-size: 0.8rem; margin-top: 4px; color: var(--text-primary);">
+                    </div>
+
+                    <button class="btn-primary" id="btnEnviarJustificacion" type="button" style="background: var(--status-warning); box-shadow: none; margin-top: 10px;">Enviar Motivo / Apelación</button>
                 </div>
 
                 <button class="btn-danger-link" id="btnCerrarSesion" type="button">Cerrar Sesión</button>
@@ -307,7 +311,7 @@
             const snapshotLimite = await getDocs(qLimite);
 
             if (snapshotLimite.size >= 5) {
-                mostrarAlerta(alertMarcacion, "⚠️ Límite de 5 marcaciones diarias alcanzado.", "error");
+                mostrarAlerta(alertMarcacion, "⚠️ Límite de marcaciones diarias alcanzado.", "error");
                 return;
             }
 
@@ -344,21 +348,74 @@
         }
     });
 
-    document.getElementById("btnEnviarJustificacion").addEventListener("click", async () => {
-        const texto = document.getElementById("txtJustificacion").value.trim();
-        if (!texto || !ultimoRegistroId) return;
+    // BOTÓN DE "NO ME PRESENTÉ HOY"
+    document.getElementById("btnNoPresento").addEventListener("click", async () => {
+        const alertMarcacion = document.getElementById("alertMarcacion");
+        const confirmar = confirm("¿Deseas registrar que no te presentaste hoy?");
+        if (!confirmar) return;
 
         try {
+            const fechaActual = new Date();
+            const fechaHoyFormat = fechaActual.toLocaleDateString("es-PE");
+
+            const docRef = await addDoc(collection(db, "registros"), {
+                usuario: usuarioActual.usuario,
+                nombre: usuarioActual.nombre || usuarioActual.usuario,
+                tipo: "Ausencia",
+                distanciaMetros: 0,
+                fechaHora: fechaActual.toLocaleString("es-PE"),
+                estadoPuntualidad: "No se presentó",
+                observaciones: "Ausencia reportada por el practicante",
+                fechaHoy: fechaHoyFormat,
+                creado: serverTimestamp()
+            });
+
+            ultimoRegistroId = docRef.id;
+            mostrarAlerta(alertMarcacion, "Registrado como: No se presentó. Puedes justificar tu ausencia abajo.", "error");
+            document.getElementById("boxJustificar").classList.remove("hidden");
+
+        } catch (err) {
+            mostrarAlerta(alertMarcacion, "Error: " + err.message, "error");
+        }
+    });
+
+    // ENVÍO DE JUSTIFICACIÓN / APELACIÓN CON SOPORTE DE ARCHIVO (IMAGEN)
+    document.getElementById("btnEnviarJustificacion").addEventListener("click", async () => {
+        const texto = document.getElementById("txtJustificacion").value.trim();
+        const archivoInput = document.getElementById("archivoComprobante");
+        const alertMarcacion = document.getElementById("alertMarcacion");
+
+        if (!texto || !ultimoRegistroId) {
+            alert("Por favor ingresa un motivo.");
+            return;
+        }
+
+        try {
+            let archivoUrl = "";
+
+            // Si el usuario seleccionó una imagen o archivo, lo convertimos a Base64 temporalmente para guardarlo
+            if (archivoInput.files && archivoInput.files[0]) {
+                const archivo = archivoInput.files[0];
+                archivoUrl = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(e.target.result);
+                    reader.readAsDataURL(archivo);
+                });
+            }
+
             await updateDoc(doc(db, "registros", ultimoRegistroId), {
                 justificacion: texto,
+                archivoUrl: archivoUrl,
+                estadoPuntualidad: "Apelado / Justificado",
                 estadoJustificacion: "Pendiente"
             });
 
-            mostrarAlerta(document.getElementById("alertMarcacion"), "Justificación enviada al administrador.", "success");
+            mostrarAlerta(alertMarcacion, "Justificación y comprobante enviados con éxito.", "success");
             document.getElementById("boxJustificar").classList.add("hidden");
             document.getElementById("txtJustificacion").value = "";
+            document.getElementById("archivoComprobante").value = "";
         } catch (e) {
-            mostrarAlerta(document.getElementById("alertMarcacion"), "Error: " + e.message, "error");
+            mostrarAlerta(alertMarcacion, "Error al enviar: " + e.message, "error");
         }
     });
 
