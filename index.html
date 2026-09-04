@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RGPracticas - Control de Asistencia</title>
     <!-- Enlace para PWA y compatibilidad móvil -->
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#3b82f6">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="RGPracticas">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="RGPracticas">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -459,6 +459,22 @@
 
         try {
             const fechaActual = new Date();
+            const fechaHoyFormat = fechaActual.toLocaleDateString("es-PE");
+
+            // VALIDACIÓN: Limitar a máximo 5 registros diarios por usuario
+            const qLimite = query(
+                collection(db, "registros"), 
+                where("usuario", "==", usuarioActual.usuario),
+                where("fechaHoy", "==", fechaHoyFormat)
+            );
+            const snapshotLimite = await getDocs(qLimite);
+
+            if (snapshotLimite.size >= 5) {
+                mostrarAlerta(alertMarcacion, "⚠️ Has alcanzado el límite máximo permitido de 5 marcaciones para hoy.", "error");
+                btnMarcar.disabled = true;
+                return;
+            }
+
             const evaluacion = await evaluarHorario(tipo);
 
             const docRef = await addDoc(collection(db, "registros"), {
@@ -489,7 +505,9 @@
         } catch (err) {
             mostrarAlerta(alertMarcacion, "Error: " + err.message, "error");
         } finally {
-            btnMarcar.disabled = false;
+            if (distanciaActual <= DISTANCIA_MAXIMA) {
+                btnMarcar.disabled = false;
+            }
         }
     });
 
