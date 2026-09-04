@@ -6,6 +6,12 @@
     <title>RGPracticas - Panel Administrativo</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    
+    <!-- Librerías para Exportar a Excel y PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
     <style>
         .admin-container {
             max-width: 1100px;
@@ -67,6 +73,38 @@
             font-size: 0.85rem;
             outline: none;
         }
+        .btn-export-excel {
+            background-color: #10b981;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.82rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: opacity 0.2s;
+        }
+        .btn-export-excel:hover { opacity: 0.9; }
+        
+        .btn-export-pdf {
+            background-color: #ef4444;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.82rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: opacity 0.2s;
+        }
+        .btn-export-pdf:hover { opacity: 0.9; }
+
         .table-responsive {
             width: 100%;
             overflow-x: auto;
@@ -175,16 +213,21 @@
             <button class="nav-tab-btn" id="tabUsuarios" type="button">Usuarios Registrados</button>
         </div>
 
-        <!-- BARRA DE FILTROS -->
+        <!-- BARRA DE FILTROS Y EXPORTACIÓN -->
         <div class="filtros-bar">
             <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                 <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 700;">FILTRAR USUARIO:</span>
                 <input type="text" id="txtFiltroUsuario" class="input-filtro" placeholder="Buscar por nombre o usuario...">
             </div>
-            <div style="display: flex; gap: 8px; align-items: center;">
+            
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                 <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 700;">FECHA:</span>
                 <input type="date" id="txtFiltroFecha" class="input-filtro">
                 <button class="input-filtro" id="btnTodosFecha" style="cursor: pointer; background: #0284c7; border: none; color: white; font-weight: 600;">Todos</button>
+                
+                <!-- BOTONES EXCEL Y PDF -->
+                <button class="btn-export-excel" id="btnExportExcel" type="button">📊 Excel</button>
+                <button class="btn-export-pdf" id="btnExportPDF" type="button">📄 PDF</button>
             </div>
         </div>
 
@@ -209,7 +252,7 @@
         </div>
     </div>
 
-    <!-- MODAL DE DETALLE Y ARCHIVO ADJUNTO -->
+    <!-- MODAL DE DETALLE -->
     <div id="modalDetalle" class="modal-overlay hidden">
         <div class="modal-card">
             <h3 style="margin-top: 0; color: var(--text-primary);">Detalle de la Marcación</h3>
@@ -223,7 +266,6 @@
     </div>
 
 <script>
-    // Lógica para el cambio de tema en el Admin
     const btnToggleAdmin = document.getElementById("btnThemeToggleAdmin");
     const themeIcon = document.getElementById("themeIcon");
     const themeText = document.getElementById("themeText");
@@ -266,6 +308,7 @@
 
     const db = getFirestore(initializeApp(firebaseConfig));
     let listaRegistrosGlobal = [];
+    let registrosFiltradosActuales = [];
 
     async function cargarRegistros() {
         const tbody = document.getElementById("tablaRegistrosBody");
@@ -299,7 +342,6 @@
             if (reg.estadoPuntualidad === "Impuntual" || reg.estadoPuntualidad === "Descuidado") claseBadge = "badge-impuntual";
             if (reg.estadoPuntualidad === "Apelado / Justificado") claseBadge = "badge-apelado";
 
-            // Mostrar observación o justificación combinada
             let textoObs = reg.observaciones || "-";
             if (reg.justificacion) {
                 textoObs = `<span style="color: #f59e0b; font-weight: 600;">Justificación:</span> ${reg.justificacion}`;
@@ -314,7 +356,7 @@
                 <td>${textoObs}</td>
                 <td>
                     <div style="display: flex; gap: 6px;">
-                        <button class="btn-detalle" onclick="verDetalle('${reg.id}')" title="Ver Comprobante">👁️</button>
+                        <button class="btn-detalle" onclick="verDetalle('${reg.id}')" title="Ver Detalles">👁️</button>
                         <button class="btn-icon" onclick="eliminarRegistro('${reg.id}')" title="Eliminar">🗑️</button>
                     </div>
                 </td>
@@ -325,24 +367,21 @@
 
     function aplicarFiltros() {
         const filtroUser = document.getElementById("txtFiltroUsuario").value.toLowerCase();
-        const filtroFecha = document.getElementById("txtFiltroFecha").value; // Formato yyyy-mm-dd que da el input date
+        const filtroFecha = document.getElementById("txtFiltroFecha").value;
 
-        const filtrados = listaRegistrosGlobal.filter(reg => {
+        registrosFiltradosActuales = listaRegistrosGlobal.filter(reg => {
             const coincideUsuario = (reg.nombre && reg.nombre.toLowerCase().includes(filtroUser)) || 
                                     (reg.usuario && reg.usuario.toLowerCase().includes(filtroUser));
             
             let coincideFecha = true;
             if (filtroFecha && reg.fechaHora) {
-                // reg.fechaHora suele guardarse como "4/9/2026, 12:25:55 p. m." o similar, filtramos por coincidencia parcial o transformando
-                // Una forma segura es si guardaste 'fechaHoy' (ej: "4/9/2026") o comparando subcadenas. 
-                // Asumiendo que filtroFecha viene en formato YYYY-MM-DD y fechaHoy es DD/MM/YYYY o similar, validemos con includes o fechaHoy:
                 coincideFecha = (reg.fechaHoy && reg.fechaHoy.includes(filtroFecha.split('-').reverse().join('/'))) || reg.fechaHora.includes(filtroFecha);
             }
 
             return coincideUsuario && (filtroFecha ? coincideFecha : true);
         });
 
-        renderizarTabla(filtrados);
+        renderizarTabla(registrosFiltradosActuales);
     }
 
     window.verDetalle = function(id) {
@@ -350,29 +389,15 @@
         if (!reg) return;
 
         const modalContenido = document.getElementById("modalContenido");
-        let htmlArchivo = `<p style="color: var(--text-secondary); margin-top: 10px;"><em>Sin archivo adjunto.</em></p>`;
-
-        if (reg.archivoUrl) {
-            htmlArchivo = `
-                <div style="margin-top: 12px; padding: 10px; background: var(--input-bg); border-radius: 8px; border: 1px solid var(--border-color);">
-                    <p style="margin: 0 0 6px 0; font-weight: 700;">📎 Comprobante Enviado:</p>
-                    <div style="display: flex; gap: 8px;">
-                        <a href="${reg.archivoUrl}" target="_blank" class="btn-detalle" style="text-decoration: none;">👁️ Ver Archivo</a>
-                        <a href="${reg.archivoUrl}" download target="_blank" class="btn-detalle" style="text-decoration: none; background: #10b981;">⬇️ Descargar</a>
-                    </div>
-                </div>
-            `;
-        }
-
         modalContenido.innerHTML = `
             <p><strong>Practicante:</strong> ${reg.nombre || reg.usuario}</p>
             <p><strong>Tipo:</strong> ${reg.tipo}</p>
             <p><strong>Fecha y Hora:</strong> ${reg.fechaHora}</p>
+            <p><strong>Distancia GPS:</strong> ${reg.distanciaMetros ? reg.distanciaMetros + ' metros' : 'N/D'}</p>
             <p><strong>Puntualidad:</strong> ${reg.estadoPuntualidad}</p>
             <p><strong>Observación Sistema:</strong> ${reg.observaciones || 'Ninguna'}</p>
             <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 10px 0;">
             <p><strong>Justificación del Usuario:</strong><br><span style="color: var(--text-secondary);">${reg.justificacion || 'No se ingresó justificación.'}</span></p>
-            ${htmlArchivo}
         `;
         document.getElementById("modalDetalle").classList.remove("hidden");
     };
@@ -387,6 +412,67 @@
             }
         }
     };
+
+    // EXPORTAR A EXCEL (Respeta los filtros activos)
+    document.getElementById("btnExportExcel").addEventListener("click", () => {
+        if (registrosFiltradosActuales.length === 0) {
+            alert("No hay datos para exportar.");
+            return;
+        }
+
+        const datosExcel = registrosFiltradosActuales.map(r => ({
+            "Practicante": r.nombre || r.usuario,
+            "Tipo Marcación": r.tipo,
+            "Fecha y Hora": r.fechaHora,
+            "Distancia (m)": r.distanciaMetros || 0,
+            "Puntualidad": r.estadoPuntualidad,
+            "Observación": r.observaciones || "",
+            "Justificación": r.justificacion || ""
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(datosExcel);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Asistencias");
+        XLSX.writeFile(workbook, "Reporte_Asistencias_RGPracticas.xlsx");
+    });
+
+    // EXPORTAR A PDF (Respeta los filtros activos)
+    document.getElementById("btnExportPDF").addEventListener("click", () => {
+        if (registrosFiltradosActuales.length === 0) {
+            alert("No hay datos para exportar.");
+            return;
+        }
+
+        const { jsPDF } = window.jspdf;
+        const docPDF = new jsPDF();
+
+        docPDF.setFontSize(16);
+        docPDF.text("Reporte de Asistencias - RGPracticas", 14, 20);
+        
+        docPDF.setFontSize(10);
+        docPDF.setTextColor(100);
+        docPDF.text(`Generado el: ${new Date().toLocaleString("es-PE")}`, 14, 27);
+
+        const columnas = ["Practicante", "Tipo", "Fecha y Hora", "Puntualidad", "Justificación"];
+        const filas = registrosFiltradosActuales.map(r => [
+            r.nombre || r.usuario,
+            r.tipo,
+            r.fechaHora,
+            r.estadoPuntualidad,
+            r.justificacion || r.observaciones || "-"
+        ]);
+
+        docPDF.autoTable({
+            head: [columnas],
+            body: filas,
+            startY: 32,
+            theme: 'grid',
+            headStyles: { fillColor: [2, 132, 199] },
+            styles: { fontSize: 8 }
+        });
+
+        docPDF.save("Reporte_Asistencias_RGPracticas.pdf");
+    });
 
     document.getElementById("cerrarModal").addEventListener("click", () => {
         document.getElementById("modalDetalle").classList.add("hidden");
@@ -403,7 +489,6 @@
         window.location.href = "index.html";
     });
 
-    // Pestañas (simulación visual de cambio de sección)
     document.getElementById("tabMarcaciones").addEventListener("click", () => {
         document.getElementById("tabMarcaciones").classList.add("active");
         document.getElementById("tabUsuarios").classList.remove("active");
@@ -411,7 +496,7 @@
     document.getElementById("tabUsuarios").addEventListener("click", () => {
         document.getElementById("tabUsuarios").classList.add("active");
         document.getElementById("tabMarcaciones").classList.remove("active");
-        alert("Apartado de Usuarios Registrados en desarrollo. (Puedes gestionarlos directamente desde tu consola de Firebase).");
+        alert("Apartado de Usuarios Registrados en desarrollo.");
     });
 
     cargarRegistros();
