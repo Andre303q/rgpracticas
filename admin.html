@@ -3,6 +3,247 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Administrativo - RGPracticas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { display: block; padding: 20px; }
+        .admin-box { max-width: 1100px; margin: 0 auto; }
+        
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .filter-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--input-bg);
+            border: 1px solid var(--glass-border);
+            padding: 8px 14px;
+            border-radius: 12px;
+        }
+
+        .filter-controls input[type="date"] {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-family: inherit;
+            outline: none;
+        }
+
+        .table-glass {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.85rem;
+        }
+
+        .table-glass th {
+            padding: 14px 12px;
+            background: var(--table-header-bg);
+            color: var(--primary-cyan);
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .table-glass td {
+            padding: 12px;
+            border-bottom: 1px solid var(--glass-border);
+            vertical-align: middle;
+        }
+
+        .badge-pill {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: inline-block;
+        }
+        .badge-Temprano, .badge-Puntual { background: rgba(16, 185, 129, 0.2); color: var(--status-success); border: 1px solid var(--status-success); }
+        .badge-Impuntual { background: rgba(239, 68, 68, 0.2); color: var(--status-error); border: 1px solid var(--status-error); }
+        .badge-Descuidado { background: rgba(217, 119, 6, 0.2); color: var(--status-warning); border: 1px solid var(--status-warning); }
+        .badge-Justificado { background: rgba(16, 185, 129, 0.3); color: var(--status-success); }
+
+        .btn-action-sm {
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            margin-right: 4px;
+        }
+        .btn-approve { background: var(--status-success); color: #fff; }
+        .btn-reject { background: var(--status-warning); color: #fff; }
+        .btn-delete { background: rgba(239, 68, 68, 0.2); color: var(--status-error); border: 1px solid rgba(239, 68, 68, 0.4); }
+    </style>
+</head>
+<body>
+
+    <div class="admin-box">
+        <div class="glass-panel top-bar">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <div class="logo-diamond" style="width:40px; height:40px; margin:0;"><span style="font-size:0.9rem;">RG</span></div>
+                <div>
+                    <h2 style="margin:0; font-size:1.2rem;">Panel Administrativo</h2>
+                    <p style="margin:0; font-size:0.75rem; color:var(--text-muted);">Gestión e inspección de asistencias</p>
+                </div>
+            </div>
+
+            <div class="filter-controls">
+                <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted);">FILTRAR FECHA:</span>
+                <input type="date" id="filtroFecha">
+                <button class="btn-action-sm btn-delete" id="btnLimpiar" style="padding:6px 10px;">Mostrar Todos</button>
+            </div>
+
+            <button class="btn-danger-link" id="btnLogout" style="width:auto; margin:0; padding:10px 16px;">Cerrar Sesión</button>
+        </div>
+
+        <div class="glass-panel" style="padding:0; overflow-x:auto;">
+            <table class="table-glass">
+                <thead>
+                    <tr>
+                        <th>Practicante</th>
+                        <th>Registro</th>
+                        <th>Fecha y Hora</th>
+                        <th>Distancia</th>
+                        <th>Puntualidad</th>
+                        <th>Justificación</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaRegistros">
+                    <tr><td colspan="7" style="text-align:center; padding:20px;">Cargando registros...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, updateDoc, deleteDoc, doc, query, orderBy } 
+        from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyB6KT4Gw-O4NDhsAREAeAdAmrIuMH53ZyQ",
+        authDomain: "rgpracticantes-da4bc.firebaseapp.com",
+        projectId: "rgpracticantes-da4bc",
+        storageBucket: "rgpracticantes-da4bc.firebasestorage.app",
+        messagingSenderId: "378103051147",
+        appId: "1:378103051147:web:0c30387cc661d75e0ff58e"
+    };
+
+    const db = getFirestore(initializeApp(firebaseConfig));
+    let memoriaRegistros = [];
+
+    document.getElementById("btnLogout").addEventListener("click", () => window.location.href = "index.html");
+
+    async function cargarRegistros() {
+        const tbody = document.getElementById("tablaRegistros");
+        try {
+            const q = query(collection(db, "registros"), orderBy("creado", "desc"));
+            const snap = await getDocs(q);
+            memoriaRegistros = [];
+
+            snap.forEach((docSnap) => {
+                memoriaRegistros.push({ id: docSnap.id, ...docSnap.data() });
+            });
+
+            renderizar(memoriaRegistros);
+        } catch (e) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--status-error);">Error: ${e.message}</td></tr>`;
+        }
+    }
+
+    function renderizar(lista) {
+        const tbody = document.getElementById("tablaRegistros");
+        tbody.innerHTML = "";
+
+        if (lista.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px;">No hay marcaciones para mostrar.</td></tr>`;
+            return;
+        }
+
+        lista.forEach((reg) => {
+            const tr = document.createElement("tr");
+
+            let justHtml = "-";
+            if (reg.justificacion) {
+                justHtml = `<i>"${reg.justificacion}"</i><br><small style="color:var(--text-muted)">Estado: <b>${reg.estadoJustificacion || 'Pendiente'}</b></small>`;
+            }
+
+            let accionesHtml = "";
+            if (reg.justificacion && reg.estadoJustificacion === "Pendiente") {
+                accionesHtml += `
+                    <button class="btn-action-sm btn-approve" onclick="responder('${reg.id}', 'Aprobada')">Aprobar</button>
+                    <button class="btn-action-sm btn-reject" onclick="responder('${reg.id}', 'Rechazada')">Rechazar</button>
+                `;
+            }
+            accionesHtml += `<button class="btn-action-sm btn-delete" onclick="eliminar('${reg.id}')" title="Eliminar de Firestore">🗑️</button>`;
+
+            tr.innerHTML = `
+                <td><b>${reg.nombre || reg.usuario}</b></td>
+                <td>${reg.tipo}</td>
+                <td>${reg.fechaHora}</td>
+                <td>${reg.distanciaMetros} metros</td>
+                <td><span class="badge-pill badge-${reg.estadoPuntualidad}">${reg.estadoPuntualidad}</span></td>
+                <td>${justHtml}</td>
+                <td>${accionesHtml}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    document.getElementById("filtroFecha").addEventListener("change", (e) => {
+        const val = e.target.value; 
+        if (!val) return renderizar(memoriaRegistros);
+
+        const [yyyy, mm, dd] = val.split("-");
+        const fechaTarget = `${parseInt(dd)}/${parseInt(mm)}/${yyyy}`;
+
+        const filtrados = memoriaRegistros.filter(r => 
+            r.fechaHoy === fechaTarget || (r.fechaHora && r.fechaHora.includes(fechaTarget))
+        );
+        renderizar(filtrados);
+    });
+
+    document.getElementById("btnLimpiar").addEventListener("click", () => {
+        document.getElementById("filtroFecha").value = "";
+        renderizar(memoriaRegistros);
+    });
+
+    window.responder = async function(id, estado) {
+        const estadoPunt = estado === "Aprobada" ? "Justificado" : "Rechazado";
+        await updateDoc(doc(db, "registros", id), {
+            estadoJustificacion: estado,
+            estadoPuntualidad: estadoPunt
+        });
+        cargarRegistros();
+    };
+
+    window.eliminar = async function(id) {
+        if (confirm("¿Confirmas eliminar este registro de la base de datos?")) {
+            await deleteDoc(doc(db, "registros", id));
+            cargarRegistros();
+        }
+    };
+
+    cargarRegistros();
+</script>
+</body>
+</html><!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Control Admin - RGPracticas</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
