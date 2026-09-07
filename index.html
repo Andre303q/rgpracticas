@@ -308,6 +308,20 @@
             const fechaActual = new Date();
             const evaluacion = evaluarHorario(tipo);
 
+            // Validación de máximo 5 registros por día para este usuario
+            const qRegistrosHoy = query(
+                collection(db, "registros"),
+                where("usuario", "==", usuarioActual.usuario),
+                where("fechaHoy", "==", evaluacion.fechaHoy)
+            );
+            const snapRegistrosHoy = await getDocs(qRegistrosHoy);
+
+            if (snapRegistrosHoy.size >= 5) {
+                mostrarAlerta(alertMarcacion, "Has alcanzado el límite máximo de 5 registros permitidos por día.", "error");
+                if (distanciaActual <= DISTANCIA_MAXIMA) btnMarcar.disabled = false;
+                return;
+            }
+
             const docRef = await addDoc(collection(db, "registros"), {
                 usuario: usuarioActual.usuario,
                 nombre: usuarioActual.nombre || usuarioActual.usuario,
@@ -404,7 +418,6 @@
             querySnapshot.forEach((docSnap) => {
                 const r = docSnap.data();
                 
-                // Sincronizado con los estados que establece el admin.html
                 let textoEstado = r.estadoPuntualidad || "Puntual";
                 if (r.estadoPuntualidad === "Justificación Aprobada" || r.estadoJustificacion === "Aceptado") {
                     textoEstado = "Justificación Aprobada ✓";
