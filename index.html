@@ -367,7 +367,7 @@
         }
     });
 
-    // LÓGICA PARA MOSTRAR / OCULTAR Y CARGAR EL HISTORIAL DEL PRACTICANTE CON TARJETAS DE FONDO SÓLIDO
+    // LÓGICA PARA MOSTRAR / OCULTAR Y CARGAR EL HISTORIAL DEL PRACTICANTE EN TIEMPO REAL
     document.getElementById("btnToggleHistorial").addEventListener("click", async () => {
         const boxHistorial = document.getElementById("boxHistorial");
         const listaHistorial = document.getElementById("listaHistorial");
@@ -389,25 +389,24 @@
                 querySnapshot.forEach((docSnap) => {
                     const r = docSnap.data();
                     
-                    let badgeColor = "var(--status-ok)";
+                    let badgeColor = "var(--status-success, #10b981)";
                     let textoEstado = r.estadoPuntualidad;
 
                     if (r.estadoPuntualidad === "Impuntual" || r.estadoPuntualidad === "Descuidado") {
-                        badgeColor = "var(--status-warning)";
+                        badgeColor = "var(--status-warning, #f59e0b)";
                     } else if (r.estadoJustificacion === "Aceptado") {
-                        badgeColor = "var(--status-ok)";
+                        badgeColor = "var(--status-success, #10b981)";
                         textoEstado = "Justificación Aceptada ✓";
                     } else if (r.estadoJustificacion === "Rechazado") {
-                        badgeColor = "var(--status-bad, #e74c3c)";
+                        badgeColor = "var(--status-error, #ef4444)";
                         textoEstado = "Justificación Rechazada ✕";
                     } else if (r.estadoJustificacion === "Pendiente") {
-                        badgeColor = "var(--status-warning)";
+                        badgeColor = "var(--status-warning, #f59e0b)";
                         textoEstado = "Justificación en Revisión ⏳";
                     }
 
-                    // Se usa un fondo adaptativo basado en las variables de tu style.css para que luzca bien en modo claro y oscuro
                     html += `
-                        <div style="background: var(--bg-input, rgba(255, 255, 255, 0.05)); padding: 12px; border-radius: 10px; border-left: 4px solid ${badgeColor}; border: 1px solid var(--border-color); margin-bottom: 8px;">
+                        <div style="background: var(--input-bg, rgba(255, 255, 255, 0.05)); padding: 12px; border-radius: 10px; border-left: 4px solid ${badgeColor}; border: 1px solid var(--border-color); margin-bottom: 8px;">
                             <div style="display: flex; justify-content: space-between; font-weight: 700;">
                                 <span style="color: var(--text-color);">${r.tipo}</span>
                                 <span style="font-size: 0.7rem; color: ${badgeColor};">${textoEstado}</span>
@@ -419,7 +418,7 @@
                 });
                 listaHistorial.innerHTML = html;
             } catch (err) {
-                listaHistorial.innerHTML = `<span style="color: red; text-align: center;">Error al cargar historial.</span>`;
+                listaHistorial.innerHTML = `<span style="color: var(--status-error, #ef4444); text-align: center;">Error al cargar historial.</span>`;
             }
         }
     });
