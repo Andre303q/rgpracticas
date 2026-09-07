@@ -6,6 +6,9 @@
     <title>RGPracticas - Portal de Asistencia</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <!-- Librerías de jsPDF para la descarga de PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
 
@@ -99,15 +102,14 @@
                     <button class="btn-primary" id="btnEnviarJustificacion" type="button" style="background: var(--status-warning); box-shadow: none; margin-top: 12px;">Enviar Motivo</button>
                 </div>
 
-                <!-- BOTÓN PARA VER HISTORIAL / ESTATUS -->
+                <!-- BOTÓN PARA DESPLEGAR APARTADO DE DESCARGA PDF -->
                 <button class="btn-primary" id="btnToggleHistorial" type="button" style="background: var(--border-color); color: var(--text-color); box-shadow: none; margin-top: 14px;">📊 Ver estatus de mis registros</button>
 
-                <!-- APARTADO / CONTENEDOR DE HISTORIAL -->
-                <div id="boxHistorial" class="hidden" style="margin-top: 14px; border-top: 1px dashed var(--border-color); padding-top: 14px; max-height: 250px; overflow-y: auto;">
-                    <label style="font-size: 0.75rem; font-weight: 800; display: block; margin-bottom: 8px;">📋 TUS ÚLTIMOS REGISTROS</label>
-                    <div id="listaHistorial" style="display: flex; flex-direction: column; gap: 8px; font-size: 0.8rem;">
-                        <span style="color: var(--text-muted); text-align: center;">Cargando registros...</span>
-                    </div>
+                <!-- APARTADO / CONTENEDOR DE DESCARGA PDF -->
+                <div id="boxHistorial" class="hidden" style="margin-top: 14px; border-top: 1px dashed var(--border-color); padding-top: 14px; text-align: center;">
+                    <label style="font-size: 0.75rem; font-weight: 800; display: block; margin-bottom: 10px;">📋 REPORTE DE REGISTROS PERSONALES</label>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">Descarga tu historial completo con los estatus y resoluciones oficiales actualizadas.</p>
+                    <button class="btn-primary" id="btnDescargarPdfUsuario" type="button" style="background: #10b981; box-shadow: none; font-size: 0.85rem;">📥 Descargar mis registros en PDF</button>
                 </div>
 
                 <button class="btn-danger-link" id="btnCerrarSesion" type="button">Cerrar Sesión</button>
@@ -146,7 +148,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, collection, serverTimestamp, query, where, getDocs, onSnapshot } 
+    import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, collection, serverTimestamp, query, where, getDocs } 
         from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -171,7 +173,6 @@
     let modoActual = 'login';
     let geoWatchId = null;
     let ultimoRegistroId = null;
-    let unsubscribeHistorial = null;
 
     window.cambiarModo = function(modo) {
         modoActual = modo;
@@ -240,7 +241,6 @@
 
     document.getElementById("btnCerrarSesion").addEventListener("click", () => {
         if (geoWatchId !== null) navigator.geolocation.clearWatch(geoWatchId);
-        if (unsubscribeHistorial) unsubscribeHistorial();
         window.location.reload();
     });
 
@@ -369,68 +369,74 @@
         }
     });
 
-    // LÓGICA DE HISTORIAL EN TIEMPO REAL CON ONSNAPSHOT PARA EL PRACTICANTE
     document.getElementById("btnToggleHistorial").addEventListener("click", () => {
         const boxHistorial = document.getElementById("boxHistorial");
-        const listaHistorial = document.getElementById("listaHistorial");
-
         boxHistorial.classList.toggle("hidden");
+    });
 
-        if (!boxHistorial.classList.contains("hidden")) {
-            listaHistorial.innerHTML = `<span style="color: var(--text-muted); text-align: center;">Cargando registros en tiempo real...</span>`;
-            
-            if (unsubscribeHistorial) unsubscribeHistorial();
+    document.getElementById("btnDescargarPdfUsuario").addEventListener("click", async () => {
+        const btnPdf = document.getElementById("btnDescargarPdfUsuario");
+        try {
+            btnPdf.disabled = true;
+            btnPdf.textContent = "Generando PDF...";
 
             const q = query(collection(db, "registros"), where("usuario", "==", usuarioActual.usuario));
-            
-            unsubscribeHistorial = onSnapshot(q, (querySnapshot) => {
-                if (querySnapshot.empty) {
-                    listaHistorial.innerHTML = `<span style="color: var(--text-muted); text-align: center;">No tienes registros aún.</span>`;
-                    return;
+            const querySnapshot = await getDocs(q);
+
+            if (querySnapshot.empty) {
+                alert("No tienes registros disponibles para exportar.");
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const docPdf = new jsPDF();
+
+            docPdf.setFontSize(18);
+            docPdf.setTextColor(40, 40, 40);
+            docPdf.text("Reporte de Asistencia Personal", 14, 20);
+
+            docPdf.setFontSize(11);
+            docPdf.setTextColor(100, 100, 100);
+            docPdf.text(`Colaborador: ${usuarioActual.nombre || usuarioActual.usuario}`, 14, 28);
+            docPdf.text(`Fecha de emisión: ${new Date().toLocaleString("es-PE")}`, 14, 34);
+
+            const filas = [];
+            querySnapshot.forEach((docSnap) => {
+                const r = docSnap.data();
+                
+                let textoEstado = r.estadoPuntualidad;
+                if (r.estadoJustificacion === "Aceptado") {
+                    textoEstado = "Justificación Aceptada ✓";
+                } else if (r.estadoJustificacion === "Rechazado") {
+                    textoEstado = "Justificación Rechazada ✕";
+                } else if (r.estadoJustificacion === "Pendiente") {
+                    textoEstado = "Justificación en Revisión ⏳";
                 }
 
-                let html = "";
-                querySnapshot.forEach((docSnap) => {
-                    const r = docSnap.data();
-                    
-                    let badgeColor = "var(--status-success, #10b981)";
-                    let textoEstado = r.estadoPuntualidad;
-
-                    if (r.estadoPuntualidad === "Impuntual" || r.estadoPuntualidad === "Descuidado") {
-                        badgeColor = "var(--status-warning, #f59e0b)";
-                    } 
-                    
-                    if (r.estadoJustificacion === "Aceptado") {
-                        badgeColor = "var(--status-success, #10b981)";
-                        textoEstado = "Justificación Aceptada ✓";
-                    } else if (r.estadoJustificacion === "Rechazado") {
-                        badgeColor = "var(--status-error, #ef4444)";
-                        textoEstado = "Justificación Rechazada ✕";
-                    } else if (r.estadoJustificacion === "Pendiente") {
-                        badgeColor = "var(--status-warning, #f59e0b)";
-                        textoEstado = "Justificación en Revisión ⏳";
-                    }
-
-                    html += `
-                        <div style="background: var(--input-bg, rgba(255, 255, 255, 0.05)); padding: 12px; border-radius: 10px; border-left: 4px solid ${badgeColor}; border: 1px solid var(--border-color); margin-bottom: 8px;">
-                            <div style="display: flex; justify-content: space-between; font-weight: 700;">
-                                <span style="color: var(--text-color);">${r.tipo}</span>
-                                <span style="font-size: 0.7rem; color: ${badgeColor};">${textoEstado}</span>
-                            </div>
-                            <div style="color: var(--text-muted); font-size: 0.75rem; margin-top: 2px;">${r.fechaHora}</div>
-                            ${r.justificacion ? `<div style="font-size: 0.75rem; margin-top: 4px; font-style: italic; color: var(--text-color);">Motivo: "${r.justificacion}"</div>` : ''}
-                        </div>
-                    `;
-                });
-                listaHistorial.innerHTML = html;
-            }, (err) => {
-                listaHistorial.innerHTML = `<span style="color: var(--status-error, #ef4444); text-align: center;">Error al cargar historial.</span>`;
+                filas.push([
+                    r.fechaHora || "-",
+                    r.tipo || "-",
+                    textoEstado,
+                    r.justificacion ? r.justificacion : "N/A"
+                ]);
             });
-        } else {
-            if (unsubscribeHistorial) {
-                unsubscribeHistorial();
-                unsubscribeHistorial = null;
-            }
+
+            docPdf.autoTable({
+                startY: 42,
+                head: [['Fecha y Hora', 'Tipo de Registro', 'Estatus / Resolución', 'Motivo / Justificación']],
+                body: filas,
+                theme: 'grid',
+                headStyles: { fillColor: [16, 185, 129] },
+                styles: { fontSize: 9, cellPadding: 4 }
+            });
+
+            docPdf.save(`mis_registros_${usuarioActual.usuario}.pdf`);
+
+        } catch (err) {
+            alert("Error al generar el PDF: " + err.message);
+        } finally {
+            btnPdf.disabled = false;
+            btnPdf.textContent = "📥 Descargar mis registros en PDF";
         }
     });
 
