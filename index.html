@@ -146,7 +146,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, collection, serverTimestamp, query, where, getDocs } 
+    import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, collection, serverTimestamp, query, where, getDocs, onSnapshot } 
         from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -171,6 +171,7 @@
     let modoActual = 'login';
     let geoWatchId = null;
     let ultimoRegistroId = null;
+    let unsubscribeHistorial = null;
 
     window.cambiarModo = function(modo) {
         modoActual = modo;
@@ -239,6 +240,7 @@
 
     document.getElementById("btnCerrarSesion").addEventListener("click", () => {
         if (geoWatchId !== null) navigator.geolocation.clearWatch(geoWatchId);
+        if (unsubscribeHistorial) unsubscribeHistorial();
         window.location.reload();
     });
 
@@ -367,19 +369,21 @@
         }
     });
 
-    // LÓGICA PARA MOSTRAR / OCULTAR Y CARGAR EL HISTORIAL DEL PRACTICANTE EN TIEMPO REAL
-    document.getElementById("btnToggleHistorial").addEventListener("click", async () => {
+    // LÓGICA DE HISTORIAL EN TIEMPO REAL CON ONSNAPSHOT PARA EL PRACTICANTE
+    document.getElementById("btnToggleHistorial").addEventListener("click", () => {
         const boxHistorial = document.getElementById("boxHistorial");
         const listaHistorial = document.getElementById("listaHistorial");
 
         boxHistorial.classList.toggle("hidden");
 
         if (!boxHistorial.classList.contains("hidden")) {
-            listaHistorial.innerHTML = `<span style="color: var(--text-muted); text-align: center;">Cargando registros...</span>`;
-            try {
-                const q = query(collection(db, "registros"), where("usuario", "==", usuarioActual.usuario));
-                const querySnapshot = await getDocs(q);
+            listaHistorial.innerHTML = `<span style="color: var(--text-muted); text-align: center;">Cargando registros en tiempo real...</span>`;
+            
+            if (unsubscribeHistorial) unsubscribeHistorial();
 
+            const q = query(collection(db, "registros"), where("usuario", "==", usuarioActual.usuario));
+            
+            unsubscribeHistorial = onSnapshot(q, (querySnapshot) => {
                 if (querySnapshot.empty) {
                     listaHistorial.innerHTML = `<span style="color: var(--text-muted); text-align: center;">No tienes registros aún.</span>`;
                     return;
@@ -394,7 +398,9 @@
 
                     if (r.estadoPuntualidad === "Impuntual" || r.estadoPuntualidad === "Descuidado") {
                         badgeColor = "var(--status-warning, #f59e0b)";
-                    } else if (r.estadoJustificacion === "Aceptado") {
+                    } 
+                    
+                    if (r.estadoJustificacion === "Aceptado") {
                         badgeColor = "var(--status-success, #10b981)";
                         textoEstado = "Justificación Aceptada ✓";
                     } else if (r.estadoJustificacion === "Rechazado") {
@@ -417,8 +423,13 @@
                     `;
                 });
                 listaHistorial.innerHTML = html;
-            } catch (err) {
+            }, (err) => {
                 listaHistorial.innerHTML = `<span style="color: var(--status-error, #ef4444); text-align: center;">Error al cargar historial.</span>`;
+            });
+        } else {
+            if (unsubscribeHistorial) {
+                unsubscribeHistorial();
+                unsubscribeHistorial = null;
             }
         }
     });
