@@ -1,1 +1,667 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RGPracticas - Panel Administrativo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Librerías para Exportar a Excel y PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
+    <style>
+        .admin-container {
+            max-width: 1100px;
+            width: 100%;
+            background: var(--card-bg, #1a1f2c);
+            padding: 24px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            box-sizing: border-box;
+            margin: 20px auto;
+        }
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .nav-tabs-admin {
+            display: flex;
+            background: var(--input-bg, #111827);
+            padding: 4px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color, #2d3748);
+            gap: 5px;
+        }
+        .nav-tab-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary, #a0aec0);
+            padding: 10px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.2s;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .nav-tab-btn.active {
+            background: #0284c7;
+            color: #ffffff;
+        }
+        .nav-tab-btn:hover:not(.active) {
+            background: rgba(2, 132, 199, 0.1);
+            color: var(--text-primary);
+        }
+        .filtros-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .input-filtro {
+            background: var(--input-bg, #111827);
+            border: 1px solid var(--border-color, #2d3748);
+            color: var(--text-primary, #fff);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            outline: none;
+        }
+        .btn-export-excel {
+            background-color: #10b981;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.82rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: opacity 0.2s;
+        }
+        .btn-export-excel:hover { opacity: 0.9; }
+        
+        .btn-export-pdf {
+            background-color: #ef4444;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.82rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: opacity 0.2s;
+        }
+        .btn-export-pdf:hover { opacity: 0.9; }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.82rem;
+        }
+        th, td {
+            padding: 12px 10px;
+            border-bottom: 1px solid var(--border-color, #2d3748);
+            color: var(--text-primary, #fff);
+        }
+        th {
+            font-weight: 700;
+            color: var(--text-secondary, #a0aec0);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+        .badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: inline-block;
+        }
+        .badge-puntual { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .badge-impuntual { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .badge-apelado { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+        
+        .btn-icon {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: background 0.2s;
+        }
+        .btn-icon:hover { background: rgba(239, 68, 68, 0.3); }
+
+        .btn-detalle {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .btn-detalle:hover { background: #2563eb; }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+        .modal-card {
+            background: var(--card-bg, #1a1f2c);
+            border: 1px solid var(--border-color, #2d3748);
+            padding: 24px;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-sizing: border-box;
+        }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div class="admin-container">
+        <!-- HEADER -->
+        <div class="admin-header">
+            <div>
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                    <div class="logo-diamond" style="width: 32px; height: 32px; font-size: 0.8rem;"><span>RG</span></div>
+                    <h1 style="font-size: 1.4rem; margin: 0; color: var(--text-primary);">Panel Administrativo</h1>
+                </div>
+                <p style="font-size: 0.82rem; color: var(--text-secondary); margin: 0;">Gestión de asistencia y usuarios</p>
+            </div>
+            
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <button class="theme-toggle-btn" id="btnThemeToggleAdmin" type="button" style="padding: 6px 12px; font-size: 0.8rem;">
+                    <span id="themeIcon">☀️</span> <span id="themeText">Claro</span>
+                </button>
+                <button id="btnCerrarSesionAdmin" class="btn-danger-link" style="width: auto; padding: 7px 14px; margin: 0; font-size: 0.8rem;">Cerrar Sesión</button>
+            </div>
+        </div>
+
+        <!-- PESTAÑAS Y BOTÓN DE NAVEGACIÓN A OTRO APARTADO -->
+        <div class="nav-tabs-admin">
+            <button class="nav-tab-btn active" id="tabMarcaciones" type="button">Marcaciones Generales</button>
+            <button class="nav-tab-btn" id="tabUsuarios" type="button">Usuarios Registrados</button>
+            <!-- Botón que lleva al apartado externo de estatus de registros -->
+            <a href="mis_registros.html" class="nav-tab-btn" id="btnIrMisRegistros" style="text-align: center;">📋 Ver Estatus de Mis Registros</a>
+        </div>
+
+        <!-- SECCIÓN DE MARCACIONES -->
+        <div id="seccionMarcaciones">
+            <div class="filtros-bar">
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                    <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 700;">FILTRAR USUARIO:</span>
+                    <input type="text" id="txtFiltroUsuario" class="input-filtro" placeholder="Buscar por nombre o usuario...">
+                </div>
+                
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                    <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 700;">FECHA:</span>
+                    <input type="date" id="txtFiltroFecha" class="input-filtro">
+                    <button class="input-filtro" id="btnTodosFecha" style="cursor: pointer; background: #0284c7; border: none; color: white; font-weight: 600;">Todos</button>
+                    
+                    <button class="btn-export-excel" id="btnExportExcel" type="button">📊 Excel</button>
+                    <button class="btn-export-pdf" id="btnExportPDF" type="button">📄 PDF</button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Practicante</th>
+                            <th>Tipo Marcación</th>
+                            <th>Fecha y Hora</th>
+                            <th>Distancia</th>
+                            <th>Puntualidad</th>
+                            <th>Observaciones / Justificación</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaRegistrosBody">
+                        <tr><td colspan="7" style="text-align: center; color: var(--text-secondary);">Cargando registros...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- SECCIÓN DE USUARIOS REGISTRADOS (OCULTA POR DEFECTO) -->
+        <div id="seccionUsuarios" class="hidden">
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nombre Completo</th>
+                            <th>Usuario (Login)</th>
+                            <th>Rol</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaUsuariosBody">
+                        <tr><td colspan="4" style="text-align: center; color: var(--text-secondary);">Cargando usuarios...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MODAL DE DETALLE Y GESTIÓN DE JUSTIFICACIÓN -->
+    <div id="modalDetalle" class="modal-overlay hidden">
+        <div class="modal-card">
+            <h3 style="margin-top: 0; color: var(--text-primary);">Detalle de la Marcación</h3>
+            <div id="modalContenido" style="font-size: 0.85rem; color: var(--text-primary); line-height: 1.5; margin-bottom: 20px;">
+                <!-- Dinámico -->
+            </div>
+            
+            <!-- Botones de Acción para Justificaciones -->
+            <div id="modalAccionesJustificacion" class="hidden" style="display: flex; gap: 10px; margin-bottom: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;">
+                <button type="button" id="btnAprobarJustificacion" style="flex: 1; background: #10b981; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 700; cursor: pointer;">✅ Aprobar Justificación</button>
+                <button type="button" id="btnRechazarJustificacion" style="flex: 1; background: #ef4444; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 700; cursor: pointer;">❌ Rechazar Justificación</button>
+            </div>
+
+            <div style="text-align: right;">
+                <button type="button" class="btn-detalle" id="cerrarModal" style="background: #64748b;">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const btnToggleAdmin = document.getElementById("btnThemeToggleAdmin");
+    const themeIcon = document.getElementById("themeIcon");
+    const themeText = document.getElementById("themeText");
+
+    function aplicarTemaAdmin(tema) {
+        if (tema === "dark") {
+            document.documentElement.setAttribute("data-theme", "dark");
+            themeIcon.textContent = "☀️";
+            themeText.textContent = "Claro";
+        } else {
+            document.documentElement.setAttribute("data-theme", "light");
+            themeIcon.textContent = "🌙";
+            themeText.textContent = "Oscuro";
+        }
+    }
+    const temaGuardado = localStorage.getItem("tema_app") || "dark";
+    aplicarTemaAdmin(temaGuardado);
+
+    btnToggleAdmin.addEventListener("click", () => {
+        const actual = document.documentElement.getAttribute("data-theme");
+        const nuevo = actual === "dark" ? "light" : "dark";
+        aplicarTemaAdmin(nuevo);
+        localStorage.setItem("tema_app", nuevo);
+    });
+</script>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, query, orderBy, deleteDoc, doc, updateDoc } 
+        from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyB6KT4Gw-O4NDhsAREAeAdAmrIuMH53ZyQ",
+        authDomain: "rgpracticantes-da4bc.firebaseapp.com",
+        projectId: "rgpracticantes-da4bc",
+        storageBucket: "rgpracticantes-da4bc.firebasestorage.app",
+        messagingSenderId: "378103051147",
+        appId: "1:378103051147:web:0c30387cc661d75e0ff58e"
+    };
+
+    const db = getFirestore(initializeApp(firebaseConfig));
+    let listaRegistrosGlobal = [];
+    let registrosFiltradosActuales = [];
+    let listaUsuariosGlobal = [];
+    let idRegistroSeleccionado = null;
+
+    // Cargar Registros de Asistencia
+    async function cargarRegistros() {
+        const tbody = document.getElementById("tablaRegistrosBody");
+        try {
+            const q = query(collection(db, "registros"), orderBy("creado", "desc"));
+            const snapshot = await getDocs(q);
+            
+            listaRegistrosGlobal = [];
+            snapshot.forEach(d => {
+                listaRegistrosGlobal.push({ id: d.id, ...d.data() });
+            });
+
+            aplicarFiltros();
+        } catch (e) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #ef4444;">Error al cargar: ${e.message}</td></tr>`;
+        }
+    }
+
+    // Cargar Usuarios Registrados desde Firestore
+    async function cargarUsuarios() {
+        const tbody = document.getElementById("tablaUsuariosBody");
+        try {
+            const snapshot = await getDocs(collection(db, "usuarios"));
+            listaUsuariosGlobal = [];
+            snapshot.forEach(d => {
+                listaUsuariosGlobal.push({ id: d.id, ...d.data() });
+            });
+
+            renderizarTablaUsuarios(listaUsuariosGlobal);
+        } catch (e) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #ef4444;">Error al cargar usuarios: ${e.message}</td></tr>`;
+        }
+    }
+
+    function renderizarTablaUsuarios(usuarios) {
+        const tbody = document.getElementById("tablaUsuariosBody");
+        if (usuarios.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-secondary);">No hay usuarios registrados.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = "";
+        usuarios.forEach(u => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td><strong>${u.nombre || 'Sin nombre'}</strong></td>
+                <td>${u.usuario || u.id}</td>
+                <td><span class="badge" style="background: rgba(59, 130, 246, 0.2); color: #3b82f6;">${u.rol || 'practicante'}</span></td>
+                <td>
+                    <button class="btn-icon" onclick="eliminarUsuario('${u.id}')" title="Eliminar Usuario">🗑️</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function renderizarTabla(registros) {
+        const tbody = document.getElementById("tablaRegistrosBody");
+        if (registros.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-secondary);">No se encontraron registros.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = "";
+        registros.forEach(reg => {
+            const tr = document.createElement("tr");
+            
+            let claseBadge = "badge-puntual";
+            if (reg.estadoPuntualidad === "Impuntual" || reg.estadoPuntualidad === "Descuidado") claseBadge = "badge-impuntual";
+            if (reg.estadoPuntualidad === "Apelado / Justificado") claseBadge = "badge-apelado";
+            if (reg.estadoPuntualidad === "Justificación Aprobada") claseBadge = "badge-puntual";
+            if (reg.estadoPuntualidad === "Justificación Rechazada") claseBadge = "badge-impuntual";
+
+            let textoObs = reg.observaciones || "-";
+            if (reg.justificacion) {
+                textoObs = `<span style="color: #f59e0b; font-weight: 600;">Justificación:</span> ${reg.justificacion}`;
+            }
+
+            tr.innerHTML = `
+                <td><strong>${reg.nombre || reg.usuario}</strong></td>
+                <td>${reg.tipo}</td>
+                <td>${reg.fechaHora || 'N/D'}</td>
+                <td>${reg.distanciaMetros ? reg.distanciaMetros + ' m' : 'N/D'}</td>
+                <td><span class="badge ${claseBadge}">${reg.estadoPuntualidad || 'Puntual'}</span></td>
+                <td>${textoObs}</td>
+                <td>
+                    <div style="display: flex; gap: 6px;">
+                        <button class="btn-detalle" onclick="verDetalle('${reg.id}')" title="Ver Detalles y Gestionar">👁️</button>
+                        <button class="btn-icon" onclick="eliminarRegistro('${reg.id}')" title="Eliminar">🗑️</button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function aplicarFiltros() {
+        const filtroUser = document.getElementById("txtFiltroUsuario").value.toLowerCase();
+        const filtroFecha = document.getElementById("txtFiltroFecha").value; // Formato: AAAA-MM-DD
+
+        let anioFiltro = "", mesFiltro = "", diaFiltro = "";
+        if (filtroFecha) {
+            const partes = filtroFecha.split("-");
+            anioFiltro = partes[0];
+            mesFiltro = String(parseInt(partes[1], 10));
+            diaFiltro = String(parseInt(partes[2], 10));
+        }
+
+        registrosFiltradosActuales = listaRegistrosGlobal.filter(reg => {
+            const coincideUsuario = (reg.nombre && reg.nombre.toLowerCase().includes(filtroUser)) || 
+                                    (reg.usuario && reg.usuario.toLowerCase().includes(filtroUser));
+            
+            let coincideFecha = true;
+            if (filtroFecha) {
+                coincideFecha = false;
+                const textoFecha = reg.fechaHoy || reg.fechaHora || "";
+                const match = textoFecha.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+                if (match) {
+                    const dReg = String(parseInt(match[1], 10));
+                    const mReg = String(parseInt(match[2], 10));
+                    const aReg = match[3];
+
+                    if (dReg === diaFiltro && mReg === mesFiltro && aReg === anioFiltro) {
+                        coincideFecha = true;
+                    }
+                } else if (textoFecha.includes(filtroFecha)) {
+                    coincideFecha = true;
+                }
+            }
+
+            return coincideUsuario && coincideFecha;
+        });
+
+        renderizarTabla(registrosFiltradosActuales);
+    }
+
+    window.verDetalle = function(id) {
+        const reg = listaRegistrosGlobal.find(r => r.id === id);
+        if (!reg) return;
+
+        idRegistroSeleccionado = id;
+        const modalContenido = document.getElementById("modalContenido");
+        const modalAccionesJustificacion = document.getElementById("modalAccionesJustificacion");
+
+        modalContenido.innerHTML = `
+            <p><strong>Practicante:</strong> ${reg.nombre || reg.usuario}</p>
+            <p><strong>Tipo:</strong> ${reg.tipo}</p>
+            <p><strong>Fecha y Hora:</strong> ${reg.fechaHora}</p>
+            <p><strong>Distancia GPS:</strong> ${reg.distanciaMetros ? reg.distanciaMetros + ' metros' : 'N/D'}</p>
+            <p><strong>Puntualidad actual:</strong> ${reg.estadoPuntualidad}</p>
+            <p><strong>Observación Sistema:</strong> ${reg.observaciones || 'Ninguna'}</p>
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 10px 0;">
+            <p><strong>Justificación del Usuario:</strong><br><span style="color: #f59e0b; font-weight: 600;">${reg.justificacion || 'No se ingresó justificación.'}</span></p>
+        `;
+
+        if (reg.justificacion && reg.justificacion.trim() !== "") {
+            modalAccionesJustificacion.classList.remove("hidden");
+        } else {
+            modalAccionesJustificacion.classList.add("hidden");
+        }
+
+        document.getElementById("modalDetalle").classList.remove("hidden");
+    };
+
+    // APROBAR JUSTIFICACIÓN
+    document.getElementById("btnAprobarJustificacion").addEventListener("click", async () => {
+        if (!idRegistroSeleccionado) return;
+        try {
+            await updateDoc(doc(db, "registros", idRegistroSeleccionado), {
+                estadoPuntualidad: "Justificación Aprobada"
+            });
+            alert("¡Justificación aprobada exitosamente!");
+            document.getElementById("modalDetalle").classList.add("hidden");
+            cargarRegistros();
+        } catch (e) {
+            alert("Error al aprobar: " + e.message);
+        }
+    });
+
+    // RECHAZAR JUSTIFICACIÓN
+    document.getElementById("btnRechazarJustificacion").addEventListener("click", async () => {
+        if (!idRegistroSeleccionado) return;
+        try {
+            await updateDoc(doc(db, "registros", idRegistroSeleccionado), {
+                estadoPuntualidad: "Justificación Rechazada"
+            });
+            alert("Justificación rechazada.");
+            document.getElementById("modalDetalle").classList.add("hidden");
+            cargarRegistros();
+        } catch (e) {
+            alert("Error al rechazar: " + e.message);
+        }
+    });
+
+    window.eliminarRegistro = async function(id) {
+        if (confirm("¿Estás seguro de eliminar este registro de asistencia?")) {
+            try {
+                await deleteDoc(doc(db, "registros", id));
+                cargarRegistros();
+            } catch (e) {
+                alert("Error al eliminar: " + e.message);
+            }
+        }
+    };
+
+    window.eliminarUsuario = async function(id) {
+        if (confirm("¿Estás seguro de eliminar este usuario del sistema?")) {
+            try {
+                await deleteDoc(doc(db, "usuarios", id));
+                cargarUsuarios();
+            } catch (e) {
+                alert("Error al eliminar usuario: " + e.message);
+            }
+        }
+    };
+
+    // EXPORTAR A EXCEL
+    document.getElementById("btnExportExcel").addEventListener("click", () => {
+        if (registrosFiltradosActuales.length === 0) {
+            alert("No hay datos para exportar.");
+            return;
+        }
+
+        const datosExcel = registrosFiltradosActuales.map(r => ({
+            "Practicante": r.nombre || r.usuario,
+            "Tipo Marcación": r.tipo,
+            "Fecha y Hora": r.fechaHora,
+            "Distancia (m)": r.distanciaMetros || 0,
+            "Puntualidad": r.estadoPuntualidad,
+            "Observación": r.observaciones || "",
+            "Justificación": r.justificacion || ""
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(datosExcel);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Asistencias");
+        XLSX.writeFile(workbook, "Reporte_Asistencias_RGPracticas.xlsx");
+    });
+
+    // EXPORTAR A PDF
+    document.getElementById("btnExportPDF").addEventListener("click", () => {
+        if (registrosFiltradosActuales.length === 0) {
+            alert("No hay datos para exportar.");
+            return;
+        }
+
+        const { jsPDF } = window.jspdf;
+        const docPDF = new jsPDF();
+
+        docPDF.setFontSize(16);
+        docPDF.text("Reporte de Asistencias - RGPracticas", 14, 20);
+        
+        docPDF.setFontSize(10);
+        docPDF.setTextColor(100);
+        docPDF.text(`Generado el: ${new Date().toLocaleString("es-PE")}`, 14, 27);
+
+        const columnas = ["Practicante", "Tipo", "Fecha y Hora", "Puntualidad", "Justificación"];
+        const filas = registrosFiltradosActuales.map(r => [
+            r.nombre || r.usuario,
+            r.tipo,
+            r.fechaHora,
+            r.estadoPuntualidad,
+            r.justificacion || r.observaciones || "-"
+        ]);
+
+        docPDF.autoTable({
+            head: [columnas],
+            body: filas,
+            startY: 32,
+            theme: 'grid',
+            headStyles: { fillColor: [2, 132, 199] },
+            styles: { fontSize: 8 }
+        });
+
+        docPDF.save("Reporte_Asistencias_RGPracticas.pdf");
+    });
+
+    document.getElementById("cerrarModal").addEventListener("click", () => {
+        document.getElementById("modalDetalle").classList.add("hidden");
+    });
+
+    document.getElementById("txtFiltroUsuario").addEventListener("input", aplicarFiltros);
+    document.getElementById("txtFiltroFecha").addEventListener("change", aplicarFiltros);
+    document.getElementById("btnTodosFecha").addEventListener("click", () => {
+        document.getElementById("txtFiltroFecha").value = "";
+        aplicarFiltros();
+    });
+
+    document.getElementById("btnCerrarSesionAdmin").addEventListener("click", () => {
+        window.location.href = "index.html";
+    });
+
+    // CONTROL DE PESTAÑAS (Marcaciones / Usuarios Registrados)
+    const tabMarcaciones = document.getElementById("tabMarcaciones");
+    const tabUsuarios = document.getElementById("tabUsuarios");
+    const seccionMarcaciones = document.getElementById("seccionMarcaciones");
+    const seccionUsuarios = document.getElementById("seccionUsuarios");
+
+    tabMarcaciones.addEventListener("click", () => {
+        tabMarcaciones.classList.add("active");
+        tabUsuarios.classList.remove("active");
+        seccionMarcaciones.classList.remove("hidden");
+        seccionUsuarios.classList.add("hidden");
+    });
+
+    tabUsuarios.addEventListener("click", () => {
+        tabUsuarios.classList.add("active");
+        tabMarcaciones.classList.remove("active");
+        seccionUsuarios.classList.remove("hidden");
+        seccionMarcaciones.classList.add("hidden");
+        cargarUsuarios();
+    });
+
+    cargarRegistros();
+</script>
+</body>
+</html>
