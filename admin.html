@@ -494,7 +494,6 @@
             <p><strong>Justificación del Usuario:</strong><br><span style="color: #f59e0b; font-weight: 600;">${reg.justificacion || 'No se ingresó justificación.'}</span></p>
         `;
 
-        // Mostrar botones de aprobar/rechazar solo si hay una justificación escrita
         if (reg.justificacion && reg.justificacion.trim() !== "") {
             modalAccionesJustificacion.classList.remove("hidden");
         } else {
