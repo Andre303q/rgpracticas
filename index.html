@@ -404,12 +404,13 @@
             querySnapshot.forEach((docSnap) => {
                 const r = docSnap.data();
                 
-                let textoEstado = r.estadoPuntualidad;
-                if (r.estadoJustificacion === "Aceptado") {
-                    textoEstado = "Justificación Aceptada ✓";
-                } else if (r.estadoJustificacion === "Rechazado") {
+                // Sincronizado con los estados que establece el admin.html
+                let textoEstado = r.estadoPuntualidad || "Puntual";
+                if (r.estadoPuntualidad === "Justificación Aprobada" || r.estadoJustificacion === "Aceptado") {
+                    textoEstado = "Justificación Aprobada ✓";
+                } else if (r.estadoPuntualidad === "Justificación Rechazada" || r.estadoJustificacion === "Rechazado") {
                     textoEstado = "Justificación Rechazada ✕";
-                } else if (r.estadoJustificacion === "Pendiente") {
+                } else if (r.estadoPuntualidad === "Apelado / Justificado" || r.estadoJustificacion === "Pendiente") {
                     textoEstado = "Justificación en Revisión ⏳";
                 }
 
