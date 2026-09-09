@@ -73,6 +73,30 @@
             font-size: 0.85rem;
             outline: none;
         }
+        /* Botones de Categorías de Horarios */
+        .categorias-horarios {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        .btn-categoria {
+            background: var(--input-bg, #111827);
+            border: 1px solid var(--border-color, #2d3748);
+            color: var(--text-secondary, #a0aec0);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-categoria.active {
+            background: #0284c7;
+            color: white;
+            border-color: #0284c7;
+        }
+        
         .btn-export-excel {
             background-color: #10b981;
             color: white;
@@ -196,7 +220,7 @@
                     <div class="logo-diamond" style="width: 32px; height: 32px; font-size: 0.8rem;"><span>RG</span></div>
                     <h1 style="font-size: 1.4rem; margin: 0; color: var(--text-primary);">Panel Administrativo</h1>
                 </div>
-                <p style="font-size: 0.82rem; color: var(--text-secondary); margin: 0;">Gestión de asistencia y usuarios</p>
+                <p style="font-size: 0.82rem; color: var(--text-secondary); margin: 0;">Gestión de asistencia, usuarios y horas trabajadas</p>
             </div>
             
             <div style="display: flex; gap: 10px; align-items: center;">
@@ -210,6 +234,7 @@
         <!-- PESTAÑAS SUPERIORES -->
         <div class="nav-tabs-admin">
             <button class="nav-tab-btn active" id="tabMarcaciones" type="button">Marcaciones</button>
+            <button class="nav-tab-btn" id="tabHoras" type="button">Resumen de Horas (8h)</button>
             <button class="nav-tab-btn" id="tabUsuarios" type="button">Usuarios Registrados</button>
         </div>
 
@@ -231,6 +256,15 @@
                 </div>
             </div>
 
+            <!-- APARTADOS DE CLASIFICACIÓN DE HORARIOS -->
+            <div class="categorias-horarios">
+                <button class="btn-categoria active" data-tipo="todos">Todos</button>
+                <button class="btn-categoria" data-tipo="Horario de entrada">Horario de entrada</button>
+                <button class="btn-categoria" data-tipo="Horario salida a almuerzo">Horario salida a almuerzo</button>
+                <button class="btn-categoria" data-tipo="Horario entrada de almuerzo">Horario entrada de almuerzo</button>
+                <button class="btn-categoria" data-tipo="Horario Salida">Horario Salida</button>
+            </div>
+
             <div class="table-responsive">
                 <table>
                     <thead>
@@ -246,6 +280,32 @@
                     </thead>
                     <tbody id="tablaRegistrosBody">
                         <tr><td colspan="7" style="text-align: center; color: var(--text-secondary);">Cargando registros...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- SECCIÓN DE RESUMEN DE HORAS (OCULTA POR DEFECTO) -->
+        <div id="seccionHoras" class="hidden">
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 15px;">
+                Cálculo automático diario de horas laboradas (Meta estándar: 8 horas por día). Se calcula restando la pausa de almuerzo a la jornada completa.
+            </p>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Practicante</th>
+                            <th>Entrada</th>
+                            <th>Sal. Almuerzo</th>
+                            <th>Ent. Almuerzo</th>
+                            <th>Salida</th>
+                            <th>Total Horas</th>
+                            <th>Estado Meta (8h)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaHorasBody">
+                        <tr><td colspan="8" style="text-align: center; color: var(--text-secondary);">Calculando horas...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -338,6 +398,7 @@
     let registrosFiltradosActuales = [];
     let listaUsuariosGlobal = [];
     let idRegistroSeleccionado = null;
+    let categoriaFiltroActual = "todos";
 
     // Cargar Registros de Asistencia
     async function cargarRegistros() {
@@ -352,6 +413,7 @@
             });
 
             aplicarFiltros();
+            calcularResumenHoras();
         } catch (e) {
             tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #ef4444;">Error al cargar: ${e.message}</td></tr>`;
         }
@@ -435,6 +497,125 @@
         });
     }
 
+    // Calcular horas trabajadas por día y usuario (Meta 8h)
+    function calcularResumenHoras() {
+        const tbody = document.getElementById("tablaHorasBody");
+        
+        // Agrupar por usuario + fecha
+        const agrupados = {};
+
+        listaRegistrosGlobal.forEach(r => {
+            const usuarioKey = r.nombre || r.usuario || "Desconocido";
+            // Extraer fecha limpia (DD/MM/YYYY)
+            let fechaStr = "";
+            if (r.fechaHoy) {
+                fechaStr = r.fechaHoy;
+            } else if (r.fechaHora) {
+                const matchDate = r.fechaHora.match(/(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4})/);
+                fechaStr = matchDate ? matchDate[1] : r.fechaHora.split(",")[0];
+            } else {
+                fechaStr = "Fecha desconocida";
+            }
+
+            const key = `${usuarioKey}_${fechaStr}`;
+            if (!agrupados[key]) {
+                agrupados[key] = {
+                    usuario: usuarioKey,
+                    fecha: fechaStr,
+                    entrada: null,
+                    salidaAlmuerzo: null,
+                    entradaAlmuerzo: null,
+                    salida: null
+                };
+            }
+
+            // Mapear tipos
+            const tipo = (r.tipo || "").toLowerCase();
+            if (tipo.includes("entrada") && !tipo.includes("almuerzo")) {
+                agrupados[key].entrada = r.fechaHora;
+            } else if (tipo.includes("salida a almuerzo")) {
+                agrupados[key].salidaAlmuerzo = r.fechaHora;
+            } else if (tipo.includes("regreso de almuerzo") || tipo.includes("entrada de almuerzo")) {
+                agrupados[key].entradaAlmuerzo = r.fechaHora;
+            } else if (tipo.includes("salida") && !tipo.includes("almuerzo")) {
+                agrupados[key].salida = r.fechaHora;
+            }
+        });
+
+        const resumenArray = Object.values(agrupados);
+        if (resumenArray.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-secondary);">No hay suficientes registros para calcular horas.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = "";
+        resumenArray.forEach(item => {
+            let totalHorasMinutos = 0;
+            let hEntrada = extraerHoraMinutos(item.entrada);
+            let hSalAlmuerzo = extraerHoraMinutos(item.salidaAlmuerzo);
+            let hEntAlmuerzo = extraerHoraMinutos(item.entradaAlmuerzo);
+            let hSalida = extraerHoraMinutos(item.salida);
+
+            let minutosTrabajados = 0;
+
+            if (hEntrada !== null && hSalida !== null) {
+                let jornadaTotal = hSalida - hEntrada;
+                let tiempoAlmuerzo = 0;
+                if (hSalAlmuerzo !== null && hEntAlmuerzo !== null && hEntAlmuerzo > hSalAlmuerzo) {
+                    tiempoAlmuerzo = hEntAlmuerzo - hSalAlmuerzo;
+                }
+                minutosTrabajados = jornadaTotal - tiempoAlmuerzo;
+                if (minutosTrabajados < 0) minutosTrabajados = 0;
+            }
+
+            const horas = Math.floor(minutosTrabajados / 60);
+            const minutos = minutosTrabajados % 60;
+            const horasDecimal = (minutosTrabajados / 60).toFixed(2);
+
+            let estadoMeta = `<span class="badge badge-impuntual">Incompleto (< 8h)</span>`;
+            if (minutosTrabajados >= 450) { // Permitir pequeño margen o exacto 8h (480 min)
+                estadoMeta = `<span class="badge badge-puntual">Cumplido (≥ 8h)</span>`;
+            } else if (minutosTrabajados >= 420) {
+                estadoMeta = `<span class="badge badge-apelado">Aceptable (~8h)</span>`;
+            }
+
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${item.fecha}</td>
+                <td><strong>${item.usuario}</strong></td>
+                <td>${formatearHoraTexto(item.entrada)}</td>
+                <td>${formatearHoraTexto(item.salidaAlmuerzo)}</td>
+                <td>${formatearHoraTexto(item.entradaAlmuerzo)}</td>
+                <td>${formatearHoraTexto(item.salida)}</td>
+                <td><strong>${horas}h ${minutos}m</strong> (${horasDecimal} hrs)</td>
+                <td>${estadoMeta}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function extraerHoraMinutos(fechaHoraStr) {
+        if (!fechaHoraStr) return null;
+        // Intenta extraer horas y minutos de string ej: "9/9/2026, 12:14:14 p. m." o similar
+        const match = fechaHoraStr.match(/(\d{1,2}):(\d{2})(?::\d{2})?\s*([ap]\.?\s*m\.?)?/i);
+        if (!match) return null;
+
+        let horas = parseInt(match[1], 10);
+        const minutos = parseInt(match[2], 10);
+        const ampm = match[3] ? match[3].toLowerCase() : "";
+
+        if (ampm.includes("p") && horas < 12) horas += 12;
+        if (ampm.includes("a") && horas === 12) horas = 0;
+
+        return (horas * 60) + minutos;
+    }
+
+    function formatearHoraTexto(fechaHoraStr) {
+        if (!fechaHoraStr) return "-";
+        const partes = fechaHoraStr.split(",");
+        return partes.length > 1 ? partes[1].trim() : fechaHoraStr;
+    }
+
     function aplicarFiltros() {
         const filtroUser = document.getElementById("txtFiltroUsuario").value.toLowerCase();
         const filtroFecha = document.getElementById("txtFiltroFecha").value; // Formato: AAAA-MM-DD
@@ -451,6 +632,11 @@
             const coincideUsuario = (reg.nombre && reg.nombre.toLowerCase().includes(filtroUser)) || 
                                     (reg.usuario && reg.usuario.toLowerCase().includes(filtroUser));
             
+            let coincideCategoria = true;
+            if (categoriaFiltroActual !== "todos") {
+                coincideCategoria = (reg.tipo === categoriaFiltroActual);
+            }
+
             let coincideFecha = true;
             if (filtroFecha) {
                 coincideFecha = false;
@@ -469,11 +655,21 @@
                 }
             }
 
-            return coincideUsuario && coincideFecha;
+            return coincideUsuario && coincideFecha && coincideCategoria;
         });
 
         renderizarTabla(registrosFiltradosActuales);
     }
+
+    // Manejo de botones de categoría
+    document.querySelectorAll(".btn-categoria").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            document.querySelectorAll(".btn-categoria").forEach(b => b.classList.remove("active"));
+            e.target.classList.add("active");
+            categoriaFiltroActual = e.target.getAttribute("data-tipo");
+            aplicarFiltros();
+        });
+    });
 
     window.verDetalle = function(id) {
         const reg = listaRegistrosGlobal.find(r => r.id === id);
@@ -631,24 +827,40 @@
         window.location.href = "index.html";
     });
 
-    // CONTROL DE PESTAÑAS (Marcaciones / Usuarios Registrados)
+    // CONTROL DE PESTAÑAS PRINCIPALES (Marcaciones / Resumen de Horas / Usuarios Registrados)
     const tabMarcaciones = document.getElementById("tabMarcaciones");
+    const tabHoras = document.getElementById("tabHoras");
     const tabUsuarios = document.getElementById("tabUsuarios");
     const seccionMarcaciones = document.getElementById("seccionMarcaciones");
+    const seccionHoras = document.getElementById("seccionHoras");
     const seccionUsuarios = document.getElementById("seccionUsuarios");
 
     tabMarcaciones.addEventListener("click", () => {
         tabMarcaciones.classList.add("active");
+        tabHoras.classList.remove("active");
         tabUsuarios.classList.remove("active");
         seccionMarcaciones.classList.remove("hidden");
+        seccionHoras.classList.add("hidden");
         seccionUsuarios.classList.add("hidden");
+    });
+
+    tabHoras.addEventListener("click", () => {
+        tabHoras.classList.add("active");
+        tabMarcaciones.classList.remove("active");
+        tabUsuarios.classList.remove("active");
+        seccionHoras.classList.remove("hidden");
+        seccionMarcaciones.classList.add("hidden");
+        seccionUsuarios.classList.add("hidden");
+        calcularResumenHoras();
     });
 
     tabUsuarios.addEventListener("click", () => {
         tabUsuarios.classList.add("active");
         tabMarcaciones.classList.remove("active");
+        tabHoras.classList.remove("active");
         seccionUsuarios.classList.remove("hidden");
         seccionMarcaciones.classList.add("hidden");
+        seccionHoras.classList.add("hidden");
         cargarUsuarios();
     });
 
