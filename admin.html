@@ -256,7 +256,7 @@
                 </div>
             </div>
 
-            <!-- APARTADOS DE CLASIFICACIÓN DE HORARIOS -->
+            <!-- APARTADOS DE CLASIFICACIÓN DE HORARIOS (Por defecto en "Todos") -->
             <div class="categorias-horarios">
                 <button class="btn-categoria active" data-tipo="todos">Todos</button>
                 <button class="btn-categoria" data-tipo="Horario de entrada">Horario de entrada</button>
@@ -398,7 +398,7 @@
     let registrosFiltradosActuales = [];
     let listaUsuariosGlobal = [];
     let idRegistroSeleccionado = null;
-    let categoriaFiltroActual = "todos";
+    let categoriaFiltroActual = "todos"; // Por defecto iniciará mostrando TODOS
 
     // Cargar Registros de Asistencia
     async function cargarRegistros() {
@@ -412,9 +412,12 @@
                 listaRegistrosGlobal.push({ id: d.id, ...d.data() });
             });
 
+            console.log("Registros totales descargados de Firestore:", listaRegistrosGlobal);
+
             aplicarFiltros();
             calcularResumenHoras();
         } catch (e) {
+            console.error("Error al cargar registros:", e);
             tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #ef4444;">Error al cargar: ${e.message}</td></tr>`;
         }
     }
@@ -460,7 +463,7 @@
     function renderizarTabla(registros) {
         const tbody = document.getElementById("tablaRegistrosBody");
         if (registros.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-secondary);">No se encontraron registros.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-secondary);">No se encontraron registros de asistencia.</td></tr>`;
             return;
         }
 
@@ -480,8 +483,8 @@
             }
 
             tr.innerHTML = `
-                <td><strong>${reg.nombre || reg.usuario}</strong></td>
-                <td>${reg.tipo}</td>
+                <td><strong>${reg.nombre || reg.usuario || 'Anónimo'}</strong></td>
+                <td>${reg.tipo || 'Sin tipo'}</td>
                 <td>${reg.fechaHora || 'N/D'}</td>
                 <td>${reg.distanciaMetros ? reg.distanciaMetros + ' m' : 'N/D'}</td>
                 <td><span class="badge ${claseBadge}">${reg.estadoPuntualidad || 'Puntual'}</span></td>
@@ -500,13 +503,10 @@
     // Calcular horas trabajadas por día y usuario (Meta 8h)
     function calcularResumenHoras() {
         const tbody = document.getElementById("tablaHorasBody");
-        
-        // Agrupar por usuario + fecha
         const agrupados = {};
 
         listaRegistrosGlobal.forEach(r => {
             const usuarioKey = r.nombre || r.usuario || "Desconocido";
-            // Extraer fecha limpia (DD/MM/YYYY)
             let fechaStr = "";
             if (r.fechaHoy) {
                 fechaStr = r.fechaHoy;
@@ -529,7 +529,6 @@
                 };
             }
 
-            // Mapear tipos
             const tipo = (r.tipo || "").toLowerCase();
             if (tipo.includes("entrada") && !tipo.includes("almuerzo")) {
                 agrupados[key].entrada = r.fechaHora;
@@ -550,7 +549,6 @@
 
         tbody.innerHTML = "";
         resumenArray.forEach(item => {
-            let totalHorasMinutos = 0;
             let hEntrada = extraerHoraMinutos(item.entrada);
             let hSalAlmuerzo = extraerHoraMinutos(item.salidaAlmuerzo);
             let hEntAlmuerzo = extraerHoraMinutos(item.entradaAlmuerzo);
@@ -573,7 +571,7 @@
             const horasDecimal = (minutosTrabajados / 60).toFixed(2);
 
             let estadoMeta = `<span class="badge badge-impuntual">Incompleto (< 8h)</span>`;
-            if (minutosTrabajados >= 450) { // Permitir pequeño margen o exacto 8h (480 min)
+            if (minutosTrabajados >= 450) {
                 estadoMeta = `<span class="badge badge-puntual">Cumplido (≥ 8h)</span>`;
             } else if (minutosTrabajados >= 420) {
                 estadoMeta = `<span class="badge badge-apelado">Aceptable (~8h)</span>`;
@@ -596,7 +594,6 @@
 
     function extraerHoraMinutos(fechaHoraStr) {
         if (!fechaHoraStr) return null;
-        // Intenta extraer horas y minutos de string ej: "9/9/2026, 12:14:14 p. m." o similar
         const match = fechaHoraStr.match(/(\d{1,2}):(\d{2})(?::\d{2})?\s*([ap]\.?\s*m\.?)?/i);
         if (!match) return null;
 
@@ -618,7 +615,7 @@
 
     function aplicarFiltros() {
         const filtroUser = document.getElementById("txtFiltroUsuario").value.toLowerCase();
-        const filtroFecha = document.getElementById("txtFiltroFecha").value; // Formato: AAAA-MM-DD
+        const filtroFecha = document.getElementById("txtFiltroFecha").value;
 
         let anioFiltro = "", mesFiltro = "", diaFiltro = "";
         if (filtroFecha) {
@@ -661,7 +658,7 @@
         renderizarTabla(registrosFiltradosActuales);
     }
 
-    // Manejo de botones de categoría
+    // Manejo de botones de categoría (Inicia seleccionando "Todos" por defecto)
     document.querySelectorAll(".btn-categoria").forEach(btn => {
         btn.addEventListener("click", (e) => {
             document.querySelectorAll(".btn-categoria").forEach(b => b.classList.remove("active"));
@@ -699,7 +696,6 @@
         document.getElementById("modalDetalle").classList.remove("hidden");
     };
 
-    // APROBAR JUSTIFICACIÓN
     document.getElementById("btnAprobarJustificacion").addEventListener("click", async () => {
         if (!idRegistroSeleccionado) return;
         try {
@@ -714,7 +710,6 @@
         }
     });
 
-    // RECHAZAR JUSTIFICACIÓN
     document.getElementById("btnRechazarJustificacion").addEventListener("click", async () => {
         if (!idRegistroSeleccionado) return;
         try {
@@ -751,7 +746,6 @@
         }
     };
 
-    // EXPORTAR A EXCEL
     document.getElementById("btnExportExcel").addEventListener("click", () => {
         if (registrosFiltradosActuales.length === 0) {
             alert("No hay datos para exportar.");
@@ -774,7 +768,6 @@
         XLSX.writeFile(workbook, "Reporte_Asistencias_RGPracticas.xlsx");
     });
 
-    // EXPORTAR A PDF
     document.getElementById("btnExportPDF").addEventListener("click", () => {
         if (registrosFiltradosActuales.length === 0) {
             alert("No hay datos para exportar.");
@@ -827,7 +820,6 @@
         window.location.href = "index.html";
     });
 
-    // CONTROL DE PESTAÑAS PRINCIPALES (Marcaciones / Resumen de Horas / Usuarios Registrados)
     const tabMarcaciones = document.getElementById("tabMarcaciones");
     const tabHoras = document.getElementById("tabHoras");
     const tabUsuarios = document.getElementById("tabUsuarios");
