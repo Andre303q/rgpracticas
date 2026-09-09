@@ -256,13 +256,13 @@
                 </div>
             </div>
 
-            <!-- APARTADOS DE CLASIFICACIÓN DE HORARIOS (Por defecto en "Todos") -->
+            <!-- APARTADOS DE CLASIFICACIÓN CON LOS NOMBRES EXACTOS DE FIRESTORE -->
             <div class="categorias-horarios">
                 <button class="btn-categoria active" data-tipo="todos">Todos</button>
-                <button class="btn-categoria" data-tipo="Horario de entrada">Horario de entrada</button>
-                <button class="btn-categoria" data-tipo="Horario salida a almuerzo">Horario salida a almuerzo</button>
-                <button class="btn-categoria" data-tipo="Horario entrada de almuerzo">Horario entrada de almuerzo</button>
-                <button class="btn-categoria" data-tipo="Horario Salida">Horario Salida</button>
+                <button class="btn-categoria" data-tipo="Hora de entrada">Hora de entrada</button>
+                <button class="btn-categoria" data-tipo="Hora de salida a almuerzo">Hora de salida a almuerzo</button>
+                <button class="btn-categoria" data-tipo="Hora de regreso de almuerzo">Hora de regreso de almuerzo</button>
+                <button class="btn-categoria" data-tipo="Hora de Salida">Hora de Salida</button>
             </div>
 
             <div class="table-responsive">
@@ -398,7 +398,7 @@
     let registrosFiltradosActuales = [];
     let listaUsuariosGlobal = [];
     let idRegistroSeleccionado = null;
-    let categoriaFiltroActual = "todos"; // Por defecto iniciará mostrando TODOS
+    let categoriaFiltroActual = "todos";
 
     // Cargar Registros de Asistencia
     async function cargarRegistros() {
@@ -412,17 +412,14 @@
                 listaRegistrosGlobal.push({ id: d.id, ...d.data() });
             });
 
-            console.log("Registros totales descargados de Firestore:", listaRegistrosGlobal);
-
             aplicarFiltros();
             calcularResumenHoras();
         } catch (e) {
-            console.error("Error al cargar registros:", e);
             tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #ef4444;">Error al cargar: ${e.message}</td></tr>`;
         }
     }
 
-    // Cargar Usuarios Registrados desde Firestore
+    // Cargar Usuarios Registrados
     async function cargarUsuarios() {
         const tbody = document.getElementById("tablaUsuariosBody");
         try {
@@ -431,7 +428,6 @@
             snapshot.forEach(d => {
                 listaUsuariosGlobal.push({ id: d.id, ...d.data() });
             });
-
             renderizarTablaUsuarios(listaUsuariosGlobal);
         } catch (e) {
             tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #ef4444;">Error al cargar usuarios: ${e.message}</td></tr>`;
@@ -631,7 +627,9 @@
             
             let coincideCategoria = true;
             if (categoriaFiltroActual !== "todos") {
-                coincideCategoria = (reg.tipo === categoriaFiltroActual);
+                const tipoReg = (reg.tipo || "").trim().toLowerCase();
+                const tipoBuscado = categoriaFiltroActual.trim().toLowerCase();
+                coincideCategoria = (tipoReg === tipoBuscado);
             }
 
             let coincideFecha = true;
@@ -658,7 +656,7 @@
         renderizarTabla(registrosFiltradosActuales);
     }
 
-    // Manejo de botones de categoría (Inicia seleccionando "Todos" por defecto)
+    // Manejo de botones de categoría
     document.querySelectorAll(".btn-categoria").forEach(btn => {
         btn.addEventListener("click", (e) => {
             document.querySelectorAll(".btn-categoria").forEach(b => b.classList.remove("active"));
