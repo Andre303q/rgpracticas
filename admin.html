@@ -38,6 +38,7 @@
             border-radius: 12px;
             margin-bottom: 20px;
             border: 1px solid var(--border-color, #2d3748);
+            flex-wrap: wrap;
         }
         .nav-tab-btn {
             flex: 1;
@@ -235,6 +236,7 @@
         <div class="nav-tabs-admin">
             <button class="nav-tab-btn active" id="tabMarcaciones" type="button">Marcaciones</button>
             <button class="nav-tab-btn" id="tabHoras" type="button">Resumen de Horas (8h)</button>
+            <button class="nav-tab-btn" id="tabTotalHoras" type="button">Total Acumulado</button>
             <button class="nav-tab-btn" id="tabUsuarios" type="button">Usuarios Registrados</button>
         </div>
 
@@ -306,6 +308,27 @@
                     </thead>
                     <tbody id="tablaHorasBody">
                         <tr><td colspan="8" style="text-align: center; color: var(--text-secondary);">Calculando horas...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- SECCIÓN DE TOTAL ACUMULADO DE HORAS POR USUARIO (NUEVO) -->
+        <div id="seccionTotalHoras" class="hidden">
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 15px;">
+                Suma total acumulada de horas trabajadas por cada usuario en todo el historial de registros.
+            </p>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Practicante / Usuario</th>
+                            <th>Días Laborados Registrados</th>
+                            <th>Tiempo Total Acumulado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaTotalHorasBody">
+                        <tr><td colspan="3" style="text-align: center; color: var(--text-secondary);">Calculando acumulado...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -414,6 +437,7 @@
 
             aplicarFiltros();
             calcularResumenHoras();
+            calcularTotalAcumuladoHoras();
         } catch (e) {
             tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #ef4444;">Error al cargar: ${e.message}</td></tr>`;
         }
@@ -496,9 +520,8 @@
         });
     }
 
-    // Calcular horas trabajadas por día y usuario (Meta 8h)
-    function calcularResumenHoras() {
-        const tbody = document.getElementById("tablaHorasBody");
+    // Procesar agrupamiento diario para cálculos de horas
+    function obtenerResumenDiarioArray() {
         const agrupados = {};
 
         listaRegistrosGlobal.forEach(r => {
@@ -537,21 +560,13 @@
             }
         });
 
-        const resumenArray = Object.values(agrupados);
-        if (resumenArray.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-secondary);">No hay suficientes registros para calcular horas.</td></tr>`;
-            return;
-        }
-
-        tbody.innerHTML = "";
-        resumenArray.forEach(item => {
+        return Object.values(agrupados).map(item => {
             let hEntrada = extraerHoraMinutos(item.entrada);
             let hSalAlmuerzo = extraerHoraMinutos(item.salidaAlmuerzo);
             let hEntAlmuerzo = extraerHoraMinutos(item.entradaAlmuerzo);
             let hSalida = extraerHoraMinutos(item.salida);
 
             let minutosTrabajados = 0;
-
             if (hEntrada !== null && hSalida !== null) {
                 let jornadaTotal = hSalida - hEntrada;
                 let tiempoAlmuerzo = 0;
@@ -562,14 +577,33 @@
                 if (minutosTrabajados < 0) minutosTrabajados = 0;
             }
 
-            const horas = Math.floor(minutosTrabajados / 60);
-            const minutos = minutosTrabajados % 60;
-            const horasDecimal = (minutosTrabajados / 60).toFixed(2);
+            return {
+                ...item,
+                minutosTrabajados
+            };
+        });
+    }
+
+    // Calcular horas trabajadas por día y usuario (Meta 8h)
+    function calcularResumenHoras() {
+        const tbody = document.getElementById("tablaHorasBody");
+        const resumenArray = obtenerResumenDiarioArray();
+
+        if (resumenArray.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-secondary);">No hay suficientes registros para calcular horas.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = "";
+        resumenArray.forEach(item => {
+            const horas = Math.floor(item.minutosTrabajados / 60);
+            const minutos = item.minutosTrabajados % 60;
+            const horasDecimal = (item.minutosTrabajados / 60).toFixed(2);
 
             let estadoMeta = `<span class="badge badge-impuntual">Incompleto (< 8h)</span>`;
-            if (minutosTrabajados >= 450) {
+            if (item.minutosTrabajados >= 450) {
                 estadoMeta = `<span class="badge badge-puntual">Cumplido (≥ 8h)</span>`;
-            } else if (minutosTrabajados >= 420) {
+            } else if (item.minutosTrabajados >= 420) {
                 estadoMeta = `<span class="badge badge-apelado">Aceptable (~8h)</span>`;
             }
 
@@ -583,6 +617,52 @@
                 <td>${formatearHoraTexto(item.salida)}</td>
                 <td><strong>${horas}h ${minutos}m</strong> (${horasDecimal} hrs)</td>
                 <td>${estadoMeta}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Calcular el total acumulado de horas por cada usuario
+    function calcularTotalAcumuladoHoras() {
+        const tbody = document.getElementById("tablaTotalHorasBody");
+        const resumenDiario = obtenerResumenDiarioArray();
+
+        const acumuladosPorUsuario = {};
+
+        resumenDiario.forEach(item => {
+            if (!acumuladosPorUsuario[item.usuario]) {
+                acumuladosPorUsuario[item.usuario] = {
+                    totalMinutos: 0,
+                    diasLaborados: 0
+                };
+            }
+            acumuladosPorUsuario[item.usuario].totalMinutos += item.minutosTrabajados;
+            if (item.minutosTrabajados > 0) {
+                acumuladosPorUsuario[item.usuario].diasLaborados += 1;
+            }
+        });
+
+        const arrayAcumulado = Object.keys(acumuladosPorUsuario).map(usuario => ({
+            usuario,
+            ...acumuladosPorUsuario[usuario]
+        }));
+
+        if (arrayAcumulado.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-secondary);">No hay datos acumulados disponibles.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = "";
+        arrayAcumulado.forEach(item => {
+            const horasTotales = Math.floor(item.totalMinutos / 60);
+            const minutosRestantes = item.totalMinutos % 60;
+            const horasDecimalTotal = (item.totalMinutos / 60).toFixed(2);
+
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td><strong>${item.usuario}</strong></td>
+                <td>${item.diasLaborados} días</td>
+                <td><strong style="color: #38bdf8; font-size: 0.9rem;">${horasTotales}h ${minutosRestantes}m</strong> <span style="color: var(--text-secondary); font-size: 0.78rem;">(${horasDecimalTotal} hrs)</span></td>
             `;
             tbody.appendChild(tr);
         });
@@ -818,39 +898,61 @@
         window.location.href = "index.html";
     });
 
+    // Manejo de pestañas
     const tabMarcaciones = document.getElementById("tabMarcaciones");
     const tabHoras = document.getElementById("tabHoras");
+    const tabTotalHoras = document.getElementById("tabTotalHoras");
     const tabUsuarios = document.getElementById("tabUsuarios");
+
     const seccionMarcaciones = document.getElementById("seccionMarcaciones");
     const seccionHoras = document.getElementById("seccionHoras");
+    const seccionTotalHoras = document.getElementById("seccionTotalHoras");
     const seccionUsuarios = document.getElementById("seccionUsuarios");
 
     tabMarcaciones.addEventListener("click", () => {
         tabMarcaciones.classList.add("active");
         tabHoras.classList.remove("active");
+        tabTotalHoras.classList.remove("active");
         tabUsuarios.classList.remove("active");
         seccionMarcaciones.classList.remove("hidden");
         seccionHoras.classList.add("hidden");
+        seccionTotalHoras.classList.add("hidden");
         seccionUsuarios.classList.add("hidden");
     });
 
     tabHoras.addEventListener("click", () => {
         tabHoras.classList.add("active");
         tabMarcaciones.classList.remove("active");
+        tabTotalHoras.classList.remove("active");
         tabUsuarios.classList.remove("active");
         seccionHoras.classList.remove("hidden");
         seccionMarcaciones.classList.add("hidden");
+        seccionTotalHoras.classList.add("hidden");
         seccionUsuarios.classList.add("hidden");
         calcularResumenHoras();
+    });
+
+    tabTotalHoras.addEventListener("click", () => {
+        tabTotalHoras.classList.add("active");
+        tabMarcaciones.classList.remove("active");
+        tabHoras.classList.remove("active");
+        tabUsuarios.classList.remove("active");
+        seccionTotalHoras.classList.remove("hidden");
+        seccionMarcaciones.classList.add("hidden");
+        seccionHoras.classList.add("hidden");
+        seccionUsuarios.classList.add("hidden");
+        calcularTotalAcumuladoHoras();
     });
 
     tabUsuarios.addEventListener("click", () => {
         tabUsuarios.classList.add("active");
         tabMarcaciones.classList.remove("active");
         tabHoras.classList.remove("active");
+        tabTotalHoras.classList.remove("active");
         seccionUsuarios.classList.remove("hidden");
         seccionMarcaciones.classList.add("hidden");
         seccionHoras.classList.add("hidden");
+        seccionTotalHoras.classList.add("hidden");
         cargarUsuarios();
     });
 
